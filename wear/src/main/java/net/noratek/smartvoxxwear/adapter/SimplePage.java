@@ -11,38 +11,21 @@ public class SimplePage implements Serializable {
 
     private String mPageId;
     private String mPageName;
-    private String mPageType;
     private String mTitle;
-    private String mDescription;
-    private int mIconId;
     private int mBackgroundId;
 
 
-    public SimplePage(String title, String description, int iconId, int backgroundId) {
-        this.mTitle = title;
-        this.mDescription = description;
-        this.mIconId = iconId;
-        this.mBackgroundId = backgroundId;
-    }
-
-
-    public SimplePage(String pageId, String pageName, String pageType, String title, String description, int iconId, int backgroundId) {
+    public SimplePage(String pageId, String pageName, String title, int backgroundId) {
         this.mPageId = pageId;
         this.mPageName = pageName;
-        this.mPageType = pageType;
         this.mTitle = title;
-        this.mDescription = description;
-        this.mIconId = iconId;
         this.mBackgroundId = backgroundId;
     }
 
-    public SimplePage(String pageName, String pageType, String title, String description, int iconId, int backgroundIdd) {
+    public SimplePage(String pageName, String title, int backgroundId) {
         this.mPageName = pageName;
-        this.mPageType = pageType;
         this.mTitle = title;
-        this.mDescription = description;
-        this.mIconId = iconId;
-        this.mBackgroundId = backgroundIdd;
+        this.mBackgroundId = backgroundId;
     }
 
     public String getPageId() {
@@ -61,36 +44,12 @@ public class SimplePage implements Serializable {
         this.mPageName = pageName;
     }
 
-    public String getPageType() {
-        return mPageType;
-    }
-
-    public void setPageType(String mPageType) {
-        this.mPageType = mPageType;
-    }
-
     public String getTitle() {
         return mTitle;
     }
 
     public void setTitle(String mTitle) {
         this.mTitle = mTitle;
-    }
-
-    public String getDescription() {
-        return mDescription;
-    }
-
-    public void setDescription(String description) {
-        this.mDescription = description;
-    }
-
-    public int getIconId() {
-        return mIconId;
-    }
-
-    public void setIconId(int mIconId) {
-        this.mIconId = mIconId;
     }
 
     public int getBackgroundId() {

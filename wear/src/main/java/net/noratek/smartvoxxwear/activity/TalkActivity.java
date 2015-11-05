@@ -145,8 +145,6 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
             mApiClient.disconnect();
         }
 
-        mTalkGridPageAdapter.unRegister();
-
         super.onStop();
     }
 
@@ -218,8 +216,6 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
                 for (Speaker speaker : mTalk.getSpeakers()) {
                     mSpeakers.put(speaker.getUuid(), speaker);
                 }
-
-                // EventBus.getDefault().postLocal(new TalkSpeakersListEvent(mSpeakers));
 
                 runOnUiThread(new Runnable() {
                     @Override
