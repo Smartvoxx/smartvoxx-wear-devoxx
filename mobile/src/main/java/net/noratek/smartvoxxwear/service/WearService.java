@@ -18,6 +18,7 @@ import com.google.android.gms.wearable.WearableListenerService;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import net.noratek.smartvoxx.common.model.Conference;
 import net.noratek.smartvoxx.common.model.Link;
 import net.noratek.smartvoxx.common.model.Schedules;
 import net.noratek.smartvoxx.common.model.Slot;
@@ -33,6 +34,7 @@ import net.noratek.smartvoxxwear.rest.service.DevoxxApi;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import retrofit.Callback;
@@ -55,6 +57,9 @@ public class WearService extends WearableListenerService {
     private RestAdapter mRestAdapter;
     private DevoxxApi mMethods;
     private String mConferenceName;
+
+    // Country
+    private String mCountryCode;
 
 
     @Override
@@ -95,8 +100,15 @@ public class WearService extends WearableListenerService {
         String path = messageEvent.getPath();
         String data = new String(messageEvent.getData());
 
-        if (path.equalsIgnoreCase(Constants.SCHEDULES_PATH)) {
-            retrieveSchedules();
+
+        if (path.equalsIgnoreCase(Constants.CONFERENCES_PATH)) {
+            retrieveConferences();
+            return;
+        }
+
+        if (path.startsWith(Constants.SCHEDULES_PATH)) {
+            mCountryCode = Utils.getLastPartUrl(path);
+            retrieveSchedules(mCountryCode);
             return;
         }
 
@@ -260,13 +272,107 @@ public class WearService extends WearableListenerService {
 
     }
 
+    //
+    // Conferences
+    //
+
+    // Retrieve the list of Devoxx conferences
+    private void retrieveConferences() {
+
+        HashMap<String, Conference> conferences = getConferences();
+        if (conferences == null) {
+            return;
+        }
+
+        sendConferences(conferences);
+    }
+
+
+    private HashMap<String, Conference> getConferences() {
+
+        HashMap<String, Conference> conferences = new HashMap<>();
+
+        // load list of Devoxx conferences
+        String[] stringArray = getResources().getStringArray(R.array.conferences);
+        for (String entry : stringArray) {
+            String[] splitResult = entry.split("\\|");
+            Conference conference = new Conference(splitResult[0], splitResult[1], splitResult[2], splitResult[3]);
+            conferences.put(conference.getCountryCode(), conference);
+        }
+
+        if (conferences.size() == 0) {
+            return null;
+        }
+
+        return conferences;
+    }
+
+    private Conference getConference(String countryCode) {
+
+        HashMap<String, Conference> conferences = getConferences();
+
+        // process each conference
+        for (String key : conferences.keySet()) {
+
+            if (key.equalsIgnoreCase(countryCode)) {
+                return conferences.get(key);
+            }
+        }
+
+        return null;
+    }
+
+
+    // send Conferences to the watch
+    private void sendConferences(HashMap<String, Conference> conferences) {
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CONFERENCES_PATH);
+
+        ArrayList<DataMap> conferencesDataMap = new ArrayList<>();
+
+        // process each conference
+        for (String key : conferences.keySet()) {
+            Conference conference = conferences.get(key);
+
+            final DataMap conferenceDataMap = new DataMap();
+
+            // process conference's data
+            conferenceDataMap.putString("countryCode", conference.getCountryCode());
+            conferenceDataMap.putString("title", conference.getTitle());
+
+            conferencesDataMap.add(conferenceDataMap);
+        }
+
+        // store the list in the datamap to send it to the watch
+        putDataMapRequest.getDataMap().putDataMapArrayList(Constants.LIST_PATH, conferencesDataMap);
+
+        // send the schedules
+        if (mApiClient.isConnected()) {
+            Wearable.DataApi.putDataItem(mApiClient, putDataMapRequest.asPutDataRequest());
+        }
+    }
+
 
     //
     // Schedules
     //
 
     // Retrieve schedules from Devoxx
-    private void retrieveSchedules() {
+    private void retrieveSchedules(final String countryCode) {
+
+        Conference conference = getConference(countryCode);
+        if (conference == null) {
+            return;
+        }
+
+        // prepare the REST build
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(conference.getServerUrl())
+                .build();
+
+        if (restAdapter == null) {
+            return;
+        }
+
         // retrieve the schedules list from the server
         Callback callback = new Callback() {
             @Override
@@ -278,7 +384,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendSchedules(scheduleList.getLinks());
+                sendSchedules(countryCode, scheduleList.getLinks());
             }
 
             @Override
@@ -286,13 +392,13 @@ public class WearService extends WearableListenerService {
                 Log.d(TAG, retrofitError.getMessage());
             }
         };
-        mMethods.getSchedules(mConferenceName, callback);
+        mMethods.getSchedules(conference.getName(), callback);
     }
 
 
     // send Schedules to the watch
-    private void sendSchedules(List<Link> schedules) {
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SCHEDULES_PATH);
+    private void sendSchedules(String countryCode, List<Link> schedules) {
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SCHEDULES_PATH + "/" + countryCode);
 
         ArrayList<DataMap> schedulesDataMap = new ArrayList<>();
 

@@ -5,6 +5,8 @@ package net.noratek.smartvoxx.common.utils;
  */
 public class Constants {
 
+    public static final String CONFERENCES_PATH = "/conferences";
+
     public static final String SCHEDULES_PATH = "/schedules";
 
     public static final String SLOTS_PATH = "/slots";

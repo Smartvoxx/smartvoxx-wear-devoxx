@@ -17,7 +17,6 @@ import android.widget.TextView;
 import net.noratek.smartvoxx.common.model.Speaker;
 import net.noratek.smartvoxx.common.utils.Constants;
 import net.noratek.smartvoxxwear.R;
-import net.noratek.smartvoxxwear.adapter.SimplePage;
 import net.noratek.smartvoxxwear.event.ConfirmationEvent;
 import net.noratek.smartvoxxwear.event.DisplaySpeakerEvent;
 import net.noratek.smartvoxxwear.event.GetSpeakerEvent;
@@ -50,9 +49,7 @@ public class TalkSpeakerFragment extends Fragment {
 
         mMainView = inflater.inflate(R.layout.talk_speaker_fragment, container, false);
 
-        SimplePage pageSettings = (SimplePage) (getArguments() != null ? getArguments().getSerializable("pageInfo") : null);
-
-        mSpeakerId = pageSettings.getPageId();
+        mSpeakerId = (getArguments() != null ? getArguments().getString("speakerId") : "");
 
         mMainView.findViewById(R.id.twitterIcon).setOnClickListener(new View.OnClickListener() {
             @Override
