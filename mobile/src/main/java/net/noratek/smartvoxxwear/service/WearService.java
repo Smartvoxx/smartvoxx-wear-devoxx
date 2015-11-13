@@ -34,8 +34,8 @@ import net.noratek.smartvoxxwear.rest.service.DevoxxApi;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
@@ -279,7 +279,7 @@ public class WearService extends WearableListenerService {
     // Retrieve the list of Devoxx conferences
     private void retrieveConferences() {
 
-        HashMap<String, Conference> conferences = getConferences();
+        TreeMap<String, Conference> conferences = getConferences();
         if (conferences == null) {
             return;
         }
@@ -288,9 +288,9 @@ public class WearService extends WearableListenerService {
     }
 
 
-    private HashMap<String, Conference> getConferences() {
+    private TreeMap<String, Conference> getConferences() {
 
-        HashMap<String, Conference> conferences = new HashMap<>();
+        TreeMap<String, Conference> conferences = new TreeMap<>();
 
         // load list of Devoxx conferences
         String[] stringArray = getResources().getStringArray(R.array.conferences);
@@ -309,7 +309,7 @@ public class WearService extends WearableListenerService {
 
     private Conference getConference(String countryCode) {
 
-        HashMap<String, Conference> conferences = getConferences();
+        TreeMap<String, Conference> conferences = getConferences();
 
         // process each conference
         for (String key : conferences.keySet()) {
@@ -324,7 +324,7 @@ public class WearService extends WearableListenerService {
 
 
     // send Conferences to the watch
-    private void sendConferences(HashMap<String, Conference> conferences) {
+    private void sendConferences(TreeMap<String, Conference> conferences) {
         final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CONFERENCES_PATH);
 
         ArrayList<DataMap> conferencesDataMap = new ArrayList<>();
@@ -368,10 +368,11 @@ public class WearService extends WearableListenerService {
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(conference.getServerUrl())
                 .build();
-
         if (restAdapter == null) {
             return;
         }
+
+        DevoxxApi methods = restAdapter.create(DevoxxApi.class);
 
         // retrieve the schedules list from the server
         Callback callback = new Callback() {
@@ -392,7 +393,7 @@ public class WearService extends WearableListenerService {
                 Log.d(TAG, retrofitError.getMessage());
             }
         };
-        mMethods.getSchedules(conference.getName(), callback);
+        methods.getSchedules(conference.getName(), callback);
     }
 
 
@@ -408,6 +409,7 @@ public class WearService extends WearableListenerService {
             final DataMap scheduleDataMap = new DataMap();
 
             // process and push schedule's data
+            scheduleDataMap.putLong("timestamp", new Date().getTime());
             scheduleDataMap.putString("day", Utils.getLastPartUrl(schedule.getHref()));
             scheduleDataMap.putString("title", schedule.getTitle());
 

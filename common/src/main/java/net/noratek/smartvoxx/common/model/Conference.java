@@ -57,4 +57,5 @@ public class Conference {
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
+
 }

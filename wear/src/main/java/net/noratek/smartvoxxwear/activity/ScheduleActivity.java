@@ -18,7 +18,6 @@ import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItemBuffer;
-import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataRequest;
@@ -46,8 +45,11 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
     // Avoid double tap
     private Boolean mClicked = false;
 
-    // Country
+    // Conference information
     private String mCountryCode;
+    private String mConferenceName;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +57,11 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
         // selected conference
         mCountryCode = "BE";
+        mConferenceName = getString(R.string.welcome_devoxx);
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             mCountryCode = bundle.getString("countryCode");
+            mConferenceName = bundle.getString("conferenceName");
         }
 
         setContentView(R.layout.schedule_activity);
@@ -65,6 +69,9 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
+
+                // change the title
+                ((TextView) findViewById(R.id.title)).setText(mConferenceName);
 
                 // Listview component
                 mListView = (WearableListView) findViewById(R.id.wearable_list);
@@ -173,6 +180,8 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
                             @Override
                             public void onResult(DataItemBuffer dataItems) {
 
+                                sendMessage(pathToContent, "get list of schedules");
+                                /*
                                 if (dataItems.getCount() == 0) {
                                     // refresh the list of schedules from Mobile
                                     sendMessage(pathToContent, "get list of schedules");
@@ -205,6 +214,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
                                         mListViewAdapter.refresh(schedulesList);
                                     }
                                 });
+                                */
                             }
                         }
                 );

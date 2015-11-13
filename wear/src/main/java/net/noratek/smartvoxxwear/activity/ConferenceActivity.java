@@ -30,6 +30,8 @@ import net.noratek.smartvoxxwear.R;
 import net.noratek.smartvoxxwear.wrapper.ConferencesListWrapper;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -157,7 +159,6 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
                     public void run() {
                         // hide the progress bar
                         findViewById(R.id.progressBar).setVisibility(View.GONE);
-
                         mListViewAdapter.refresh(conferencesList);
                     }
                 });
@@ -209,7 +210,6 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
                                     public void run() {
                                         // hide the progress bar
                                         findViewById(R.id.progressBar).setVisibility(View.GONE);
-
                                         mListViewAdapter.refresh(conferencesList);
                                     }
                                 });
@@ -249,6 +249,7 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
 
         Bundle b = new Bundle();
         b.putString("countryCode", conference.getCountryCode());
+        b.putString("conferenceName", conference.getTitle());
         scheduleIntent.putExtras(b);
 
         ConferenceActivity.this.startActivity(scheduleIntent);
@@ -322,6 +323,13 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
 
         public void refresh(List<Conference> conferencesList) {
             mDataset = conferencesList;
+
+            Collections.sort(mDataset, new Comparator<Conference>() {
+                @Override
+                public int compare(Conference conferenceA, Conference conferenceB) {
+                    return conferenceA.getCountryCode().compareTo(conferenceB.getCountryCode());
+                }
+            });
 
             // reload the listview
             notifyDataSetChanged();
