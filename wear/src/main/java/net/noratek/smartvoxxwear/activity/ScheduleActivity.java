@@ -48,8 +48,6 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
     // Conference information
     private String mCountryCode;
-    private String mConferenceName;
-
 
 
     @Override
@@ -58,11 +56,9 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
         // selected conference
         mCountryCode = "BE";
-        mConferenceName = getString(R.string.welcome_devoxx);
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             mCountryCode = bundle.getString("countryCode");
-            mConferenceName = bundle.getString("conferenceName");
         }
 
         setContentView(R.layout.schedule_activity);
@@ -72,7 +68,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
             public void onLayoutInflated(WatchViewStub stub) {
 
                 // change the title
-                ((TextView) findViewById(R.id.title)).setText(mConferenceName);
+                ((TextView) findViewById(R.id.title)).setText(getString(R.string.welcome_devoxx) + " " + mCountryCode);
 
                 // Listview component
                 mListView = (WearableListView) findViewById(R.id.wearable_list);
