@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
@@ -53,10 +54,6 @@ public class WearService extends WearableListenerService {
     // Play services
     private GoogleApiClient mApiClient;
 
-    // Rest
-    private RestAdapter mRestAdapter;
-    private DevoxxApi mMethods;
-    private String mConferenceName;
 
     @Override
     public void onCreate() {
@@ -67,15 +64,6 @@ public class WearService extends WearableListenerService {
                 .addApi(Wearable.API)
                 .build();
         mApiClient.connect();
-
-        // prepare the REST build
-        mRestAdapter = new RestAdapter.Builder()
-                .setEndpoint(getResources().getString(R.string.devoxx_rest_api))
-                .build();
-
-        mMethods = mRestAdapter.create(DevoxxApi.class);
-        mConferenceName = getResources().getString(R.string.devoxx_conference);
-
     }
 
 
@@ -116,13 +104,15 @@ public class WearService extends WearableListenerService {
             return;
         }
 
-        if (path.equalsIgnoreCase(Constants.TALK_PATH)) {
-            retrieveTalk(data);
+        if (path.startsWith(Constants.TALK_PATH)) {
+            countryCode = Utils.getLastPartUrl(path);
+            retrieveTalk(countryCode, data);
             return;
         }
 
-        if (path.equalsIgnoreCase(Constants.SPEAKER_PATH)) {
-            retrieveSpeaker(data);
+        if (path.startsWith(Constants.SPEAKER_PATH)) {
+            countryCode = Utils.getLastPartUrl(path);
+            retrieveSpeaker(countryCode, data);
             return;
         }
 
@@ -166,7 +156,6 @@ public class WearService extends WearableListenerService {
 
         return restAdapter.create(DevoxxApi.class);
     }
-
 
 
     //
@@ -543,7 +532,17 @@ public class WearService extends WearableListenerService {
 
 
     // Send the talk to the watch.
-    public void retrieveTalk(final String talkId) {
+    public void retrieveTalk(final String countryCode, final String talkId) {
+
+        Conference conference = getConference(countryCode);
+        if (conference == null) {
+            return;
+        }
+
+        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        if (methods == null) {
+            return;
+        }
 
         // retrieve the talk from the server
         Callback callback = new Callback() {
@@ -555,7 +554,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendTalk(talk);
+                sendTalk(countryCode, talk);
             }
 
             @Override
@@ -564,15 +563,15 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        mMethods.getTalk(mConferenceName, talkId, callback);
+        methods.getTalk(conference.getName(), talkId, callback);
     }
 
 
     /**
      * Send the talk to the watch.
      */
-    private void sendTalk(Talk talk) {
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.TALK_PATH + "/" + talk.getId());
+    private void sendTalk(String countryCode, Talk talk) {
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.TALK_PATH + "/" + countryCode + "/" + talk.getId());
 
         final DataMap talkDataMap = new DataMap();
 
@@ -627,7 +626,17 @@ public class WearService extends WearableListenerService {
 
 
     // Retrieve and Send the detail of a speaker.
-    public void retrieveSpeaker(String speakerId) {
+    public void retrieveSpeaker(final String countryCode, String speakerId) {
+
+        Conference conference = getConference(countryCode);
+        if (conference == null) {
+            return;
+        }
+
+        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        if (methods == null) {
+            return;
+        }
 
         // retrieve the speaker from the server
         Callback callback = new Callback() {
@@ -639,7 +648,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendSpeaker(speaker);
+                sendSpeaker(countryCode, speaker);
             }
 
             @Override
@@ -648,13 +657,16 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        mMethods.getSpeaker(mConferenceName, speakerId, callback);
+        methods.getSpeaker(conference.getName(), speakerId, callback);
     }
 
 
     // Send the speaker's detail to the watch.
-    private void sendSpeaker(final Speaker speaker) {
-        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SPEAKER_PATH + "/" + speaker.getUuid());
+    private void sendSpeaker(String countryCode, final Speaker speaker) {
+
+        final String dataPath = Constants.SPEAKER_PATH + "/" + countryCode + "/" + speaker.getUuid();
+
+        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(dataPath);
 
         final DataMap speakerDataMap = new DataMap();
 
@@ -684,53 +696,82 @@ public class WearService extends WearableListenerService {
 
         // retrieve and send speaker's image (if any)
         if (speaker.getAvatarURL() != null) {
+
+            final ImageTarget imageTarget = new ImageTarget(dataPath, speakerDataMap);
+
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    Picasso.with(getApplicationContext())
+                    Picasso.with(WearService.this)
                             .load(speaker.getAvatarURL())
                             .resize(100, 100)
                             .centerCrop()
-                            .into(new Target() {
-                                @Override
-                                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-                                    byte[] byteArray = byteArrayOutputStream.toByteArray();
-
-                                    String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-
-                                    // update the data map with the avatar
-                                    speakerDataMap.putString("avatarImage", encoded);
-
-
-                                    // as the datamap has changed, a onDataChanged event will be fired on the remote node
-
-                                    // store the list in the datamap to send it to the wear
-                                    PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SPEAKER_PATH + "/" + speaker.getUuid());
-                                    putDataMapRequest.getDataMap().putDataMap(Constants.DETAIL_PATH, speakerDataMap);
-
-                                    // send the speaker
-                                    if (mApiClient.isConnected()) {
-                                        Wearable.DataApi.putDataItem(mApiClient, putDataMapRequest.asPutDataRequest());
-                                    }
-                                }
-
-                                @Override
-                                public void onBitmapFailed(Drawable errorDrawable) {
-
-                                }
-
-                                @Override
-                                public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                                }
-                            });
+                            .into(imageTarget);
                 }
             });
-
         }
     }
+
+    public class ImageTarget implements Target {
+
+        private String mDataPath;
+        private DataMap mSpeakerDataMap;
+
+
+        public ImageTarget(String dataPath, DataMap speakerDataMap) {
+            mDataPath = dataPath;
+            mSpeakerDataMap = speakerDataMap;
+        }
+
+        @Override
+        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+            String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
+            // update the data map with the avatar
+            mSpeakerDataMap.putString("avatarImage", encoded);
+
+
+            // as the datamap has changed, a onDataChanged event will be fired on the remote node
+
+            // store the list in the datamap to send it to the wear
+            final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(mDataPath);
+            putDataMapRequest.getDataMap().putDataMap(Constants.DETAIL_PATH, mSpeakerDataMap);
+
+            // send the speaker
+            // event not more defined on the calendar -> inform the watch
+            mApiClient = new GoogleApiClient.Builder(getApplicationContext())
+                    .addApi(Wearable.API)
+                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                        @Override
+                        public void onConnected(Bundle bundle) {
+                            Wearable.DataApi.putDataItem(mApiClient, putDataMapRequest.asPutDataRequest());
+                        }
+
+                        @Override
+                        public void onConnectionSuspended(int cause) {
+
+                        }
+                    }).build();
+            mApiClient.connect();
+        }
+
+        @Override
+        public void onBitmapFailed(Drawable errorDrawable) {
+            Log.d(TAG, "onBitmapFailed!!! ");
+
+        }
+
+        @Override
+        public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+        }
+
+    }
+
 
 
 }

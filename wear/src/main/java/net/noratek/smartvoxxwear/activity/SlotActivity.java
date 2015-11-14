@@ -178,6 +178,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
         Intent slotIntent = new Intent(SlotActivity.this, TalkActivity.class);
 
         Bundle b = new Bundle();
+        b.putString("countryCode", mCountryCode);
         b.putString("talkId", slot.getTalk().getId());
         b.putString("talkTitle", slot.getTalk().getTitle());
         b.putString("roomName", slot.getRoomName());
@@ -257,7 +258,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
     // Get Slots from the data items repository (cache).
     // If not available, we get the data from the Mobile device.
     //
-    private void getSlotsFromCache(final String pathToContent) {
+    private void getSlotsFromCache(String pathToContent) {
         Uri uri = new Uri.Builder()
                 .scheme(PutDataRequest.WEAR_URI_SCHEME)
                 .path(pathToContent)

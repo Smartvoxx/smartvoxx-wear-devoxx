@@ -72,14 +72,19 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
     private Long mFromTimeMillis;
     private Long mToTimeMillis;
 
+    // Conference information
+    private String mCountryCode;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mCountryCode = "BE";
         mTalkId = "";
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
+            mCountryCode = bundle.getString("countryCode");
             mTalkId = bundle.getString("talkId");
             mTalkTitle = bundle.getString("talkTitle");
             mRoomName = bundle.getString("roomName");
@@ -117,7 +122,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
         }
 
         // Retrieve the talk
-        getTalkFromCache(mTalkId);
+        getTalkFromCache(Constants.TALK_PATH + "/" + mCountryCode + "/"  + mTalkId);
     }
 
 
@@ -192,7 +197,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
         for (DataEvent event : dataEventBuffer) {
             // Check if we have received our speakers
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.TALK_PATH + "/" + mTalkId)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.TALK_PATH + "/" + mCountryCode + "/"+ mTalkId)) {
 
                 TalkWrapper talkWrapper = new TalkWrapper();
 
@@ -230,7 +235,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
 
             // Check if we have received some details for a speaker
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.SPEAKER_PATH)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.SPEAKER_PATH +  "/" + mCountryCode + "/")) {
                 SpeakerDetailWrapper speakerDetailWrapper = new SpeakerDetailWrapper();
 
                 Speaker speaker = speakerDetailWrapper.getSpeakerDetail(event);
@@ -288,13 +293,11 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
     // Get Talk from the data item repository (cache).
     // If not available, we refresh the data from the Mobile device.
     //
-    private void getTalkFromCache(final String talkId) {
-
-        final String dataPath = Constants.TALK_PATH + "/" + talkId;
+    private void getTalkFromCache(String pathToContent) {
 
         Uri uri = new Uri.Builder()
                 .scheme(PutDataRequest.WEAR_URI_SCHEME)
-                .path(dataPath)
+                .path(pathToContent)
                 .build();
 
         Wearable.DataApi.getDataItems(mApiClient, uri)
@@ -311,7 +314,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
                                 if (dataMap == null) {
                                     // unable to fetch data -> retrieve the talk from the Mobile
-                                    sendMessage(Constants.TALK_PATH, talkId);
+                                    sendMessage(Constants.TALK_PATH + "/" + mCountryCode, mTalkId);
                                     dataItems.release();
                                     return;
                                 }
@@ -414,7 +417,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
     //
     private void getSpeakerFromCache(final String speakerId) {
 
-        final String dataPath = Constants.SPEAKER_PATH + "/" + speakerId;
+        final String dataPath = Constants.SPEAKER_PATH + "/" + mCountryCode + "/" + speakerId;
 
         Uri uri = new Uri.Builder()
                 .scheme(PutDataRequest.WEAR_URI_SCHEME)
@@ -435,7 +438,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
                                 if (dataMap == null) {
                                     // unable to fetch data -> refresh the list of slots from Mobile
-                                    sendMessage(Constants.SPEAKER_PATH, speakerId);
+                                    sendMessage(Constants.SPEAKER_PATH + "/" + mCountryCode, speakerId);
                                     dataItems.release();
                                     return;
                                 }
