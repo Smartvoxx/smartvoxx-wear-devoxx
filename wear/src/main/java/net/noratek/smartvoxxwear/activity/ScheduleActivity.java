@@ -18,6 +18,7 @@ import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItemBuffer;
+import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataRequest;
@@ -180,8 +181,6 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
                             @Override
                             public void onResult(DataItemBuffer dataItems) {
 
-                                sendMessage(pathToContent, "get list of schedules");
-                                /*
                                 if (dataItems.getCount() == 0) {
                                     // refresh the list of schedules from Mobile
                                     sendMessage(pathToContent, "get list of schedules");
@@ -214,7 +213,6 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
                                         mListViewAdapter.refresh(schedulesList);
                                     }
                                 });
-                                */
                             }
                         }
                 );
@@ -250,6 +248,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         Intent scheduleIntent = new Intent(ScheduleActivity.this, SlotActivity.class);
 
         Bundle b = new Bundle();
+        b.putString("countryCode", mCountryCode);
         b.putString("dayOfWeek", schedule.getDay());
         scheduleIntent.putExtras(b);
 

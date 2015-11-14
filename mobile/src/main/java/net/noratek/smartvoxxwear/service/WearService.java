@@ -58,10 +58,6 @@ public class WearService extends WearableListenerService {
     private DevoxxApi mMethods;
     private String mConferenceName;
 
-    // Country
-    private String mCountryCode;
-
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -96,6 +92,8 @@ public class WearService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
 
+        String countryCode = "BE";
+
         // Processing the incoming message
         String path = messageEvent.getPath();
         String data = new String(messageEvent.getData());
@@ -107,13 +105,14 @@ public class WearService extends WearableListenerService {
         }
 
         if (path.startsWith(Constants.SCHEDULES_PATH)) {
-            mCountryCode = Utils.getLastPartUrl(path);
-            retrieveSchedules(mCountryCode);
+            countryCode = Utils.getLastPartUrl(path);
+            retrieveSchedules(countryCode);
             return;
         }
 
-        if (path.equalsIgnoreCase(Constants.SLOTS_PATH)) {
-            retrieveSlots(data);
+        if (path.startsWith(Constants.SLOTS_PATH)) {
+            countryCode = Utils.getLastPartUrl(path);
+            retrieveSlots(countryCode, data);
             return;
         }
 
@@ -149,6 +148,25 @@ public class WearService extends WearableListenerService {
 
 
     }
+
+
+    //
+    // REST Client
+    //
+
+    private DevoxxApi getRestClient(String url) {
+
+        // prepare the REST build
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(url)
+                .build();
+        if (restAdapter == null) {
+            return null;
+        }
+
+        return restAdapter.create(DevoxxApi.class);
+    }
+
 
 
     //
@@ -364,15 +382,10 @@ public class WearService extends WearableListenerService {
             return;
         }
 
-        // prepare the REST build
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(conference.getServerUrl())
-                .build();
-        if (restAdapter == null) {
+        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        if (methods == null) {
             return;
         }
-
-        DevoxxApi methods = restAdapter.create(DevoxxApi.class);
 
         // retrieve the schedules list from the server
         Callback callback = new Callback() {
@@ -409,7 +422,6 @@ public class WearService extends WearableListenerService {
             final DataMap scheduleDataMap = new DataMap();
 
             // process and push schedule's data
-            scheduleDataMap.putLong("timestamp", new Date().getTime());
             scheduleDataMap.putString("day", Utils.getLastPartUrl(schedule.getHref()));
             scheduleDataMap.putString("title", schedule.getTitle());
 
@@ -432,7 +444,18 @@ public class WearService extends WearableListenerService {
 
 
     // Retrieve and Send the slots for a specific schedule.
-    private void retrieveSlots(final String day) {
+    private void retrieveSlots(final String countryCode, final String day) {
+
+        Conference conference = getConference(countryCode);
+        if (conference == null) {
+            return;
+        }
+
+        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        if (methods == null) {
+            return;
+        }
+
 
         Callback callback = new Callback() {
             @Override
@@ -443,7 +466,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendSLots(slotList.getSlots(), day);
+                sendSLots(countryCode, slotList.getSlots(), day);
             }
 
             @Override
@@ -452,18 +475,18 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        mMethods.getSchedule(mConferenceName, day, callback);
+        methods.getSchedule(conference.getName(), day, callback);
     }
 
 
     // Send the schedule's slots to the watch.
-    private void sendSLots(List<Slot> slotList, String day) {
+    private void sendSLots(String countryCode, List<Slot> slotList, String day) {
 
         if (slotList == null) {
             return;
         }
 
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SLOTS_PATH + "/" + day);
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SLOTS_PATH + "/" + countryCode + "/" + day);
 
         ArrayList<DataMap> slotsDataMap = new ArrayList<>();
 
