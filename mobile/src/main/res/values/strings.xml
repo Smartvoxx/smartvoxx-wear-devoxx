@@ -6,8 +6,18 @@
 
 
     <!-- REST API for Devoxx -->
+    <string name="devoxx_country">Belgium 2015</string>
     <string name="devoxx_rest_api">http://cfp.devoxx.be/api</string>
     <string name="devoxx_conference">DV15</string>
+
+    <string-array name="conferences">
+        <item>BE|Belgium 2015|DV15|http://cfp.devoxx.be/api</item>
+        <item>FR|France 2016|DevoxxFR2016|http://cfp.devoxx.fr/api</item>
+        <item>MA|Morocco 2015|DevoxxMA2015|http://cfp.devoxx.ma/api1</item>
+        <item>PL|Poland 2015|DevoxxPL2015|http://cfp.devoxx.pl/api</item>
+        <item>UK|United Kingdom 2016|DevoxxUK2016|http://cfp.devoxx.co.uk/api</item>
+    </string-array>
+
 
     <!-- Notifications -->
     <string name="remove_event">Remove from calendar</string>

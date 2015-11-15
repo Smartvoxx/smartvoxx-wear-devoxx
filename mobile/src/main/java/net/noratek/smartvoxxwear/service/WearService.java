@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
@@ -18,6 +19,7 @@ import com.google.android.gms.wearable.WearableListenerService;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import net.noratek.smartvoxx.common.model.Conference;
 import net.noratek.smartvoxx.common.model.Link;
 import net.noratek.smartvoxx.common.model.Schedules;
 import net.noratek.smartvoxx.common.model.Slot;
@@ -34,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TreeMap;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
@@ -51,11 +54,6 @@ public class WearService extends WearableListenerService {
     // Play services
     private GoogleApiClient mApiClient;
 
-    // Rest
-    private RestAdapter mRestAdapter;
-    private DevoxxApi mMethods;
-    private String mConferenceName;
-
 
     @Override
     public void onCreate() {
@@ -66,15 +64,6 @@ public class WearService extends WearableListenerService {
                 .addApi(Wearable.API)
                 .build();
         mApiClient.connect();
-
-        // prepare the REST build
-        mRestAdapter = new RestAdapter.Builder()
-                .setEndpoint(getResources().getString(R.string.devoxx_rest_api))
-                .build();
-
-        mMethods = mRestAdapter.create(DevoxxApi.class);
-        mConferenceName = getResources().getString(R.string.devoxx_conference);
-
     }
 
 
@@ -91,27 +80,39 @@ public class WearService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
 
+        String countryCode = "BE";
+
         // Processing the incoming message
         String path = messageEvent.getPath();
         String data = new String(messageEvent.getData());
 
-        if (path.equalsIgnoreCase(Constants.SCHEDULES_PATH)) {
-            retrieveSchedules();
+
+        if (path.equalsIgnoreCase(Constants.CONFERENCES_PATH)) {
+            retrieveConferences();
             return;
         }
 
-        if (path.equalsIgnoreCase(Constants.SLOTS_PATH)) {
-            retrieveSlots(data);
+        if (path.startsWith(Constants.SCHEDULES_PATH)) {
+            countryCode = Utils.getLastPartUrl(path);
+            retrieveSchedules(countryCode);
             return;
         }
 
-        if (path.equalsIgnoreCase(Constants.TALK_PATH)) {
-            retrieveTalk(data);
+        if (path.startsWith(Constants.SLOTS_PATH)) {
+            countryCode = Utils.getLastPartUrl(path);
+            retrieveSlots(countryCode, data);
             return;
         }
 
-        if (path.equalsIgnoreCase(Constants.SPEAKER_PATH)) {
-            retrieveSpeaker(data);
+        if (path.startsWith(Constants.TALK_PATH)) {
+            countryCode = Utils.getLastPartUrl(path);
+            retrieveTalk(countryCode, data);
+            return;
+        }
+
+        if (path.startsWith(Constants.SPEAKER_PATH)) {
+            countryCode = Utils.getLastPartUrl(path);
+            retrieveSpeaker(countryCode, data);
             return;
         }
 
@@ -136,6 +137,24 @@ public class WearService extends WearableListenerService {
         }
 
 
+    }
+
+
+    //
+    // REST Client
+    //
+
+    private DevoxxApi getRestClient(String url) {
+
+        // prepare the REST build
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(url)
+                .build();
+        if (restAdapter == null) {
+            return null;
+        }
+
+        return restAdapter.create(DevoxxApi.class);
     }
 
 
@@ -260,13 +279,103 @@ public class WearService extends WearableListenerService {
 
     }
 
+    //
+    // Conferences
+    //
+
+    // Retrieve the list of Devoxx conferences
+    private void retrieveConferences() {
+
+        TreeMap<String, Conference> conferences = getConferences();
+        if (conferences == null) {
+            return;
+        }
+
+        sendConferences(conferences);
+    }
+
+
+    private TreeMap<String, Conference> getConferences() {
+
+        TreeMap<String, Conference> conferences = new TreeMap<>();
+
+        // load list of Devoxx conferences
+        String[] stringArray = getResources().getStringArray(R.array.conferences);
+        for (String entry : stringArray) {
+            String[] splitResult = entry.split("\\|");
+            Conference conference = new Conference(splitResult[0], splitResult[1], splitResult[2], splitResult[3]);
+            conferences.put(conference.getCountryCode(), conference);
+        }
+
+        if (conferences.size() == 0) {
+            return null;
+        }
+
+        return conferences;
+    }
+
+    private Conference getConference(String countryCode) {
+
+        TreeMap<String, Conference> conferences = getConferences();
+
+        // process each conference
+        for (String key : conferences.keySet()) {
+
+            if (key.equalsIgnoreCase(countryCode)) {
+                return conferences.get(key);
+            }
+        }
+
+        return null;
+    }
+
+
+    // send Conferences to the watch
+    private void sendConferences(TreeMap<String, Conference> conferences) {
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CONFERENCES_PATH);
+
+        ArrayList<DataMap> conferencesDataMap = new ArrayList<>();
+
+        // process each conference
+        for (String key : conferences.keySet()) {
+            Conference conference = conferences.get(key);
+
+            final DataMap conferenceDataMap = new DataMap();
+
+            // process conference's data
+            conferenceDataMap.putString("countryCode", conference.getCountryCode());
+            conferenceDataMap.putString("title", conference.getTitle());
+
+            conferencesDataMap.add(conferenceDataMap);
+        }
+
+        // store the list in the datamap to send it to the watch
+        putDataMapRequest.getDataMap().putDataMapArrayList(Constants.LIST_PATH, conferencesDataMap);
+
+        // send the schedules
+        if (mApiClient.isConnected()) {
+            Wearable.DataApi.putDataItem(mApiClient, putDataMapRequest.asPutDataRequest());
+        }
+    }
+
 
     //
     // Schedules
     //
 
     // Retrieve schedules from Devoxx
-    private void retrieveSchedules() {
+    private void retrieveSchedules(final String countryCode) {
+
+        Conference conference = getConference(countryCode);
+        if (conference == null) {
+            return;
+        }
+
+        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        if (methods == null) {
+            return;
+        }
+
         // retrieve the schedules list from the server
         Callback callback = new Callback() {
             @Override
@@ -278,7 +387,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendSchedules(scheduleList.getLinks());
+                sendSchedules(countryCode, scheduleList.getLinks());
             }
 
             @Override
@@ -286,13 +395,13 @@ public class WearService extends WearableListenerService {
                 Log.d(TAG, retrofitError.getMessage());
             }
         };
-        mMethods.getSchedules(mConferenceName, callback);
+        methods.getSchedules(conference.getName(), callback);
     }
 
 
     // send Schedules to the watch
-    private void sendSchedules(List<Link> schedules) {
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SCHEDULES_PATH);
+    private void sendSchedules(String countryCode, List<Link> schedules) {
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SCHEDULES_PATH + "/" + countryCode);
 
         ArrayList<DataMap> schedulesDataMap = new ArrayList<>();
 
@@ -324,7 +433,18 @@ public class WearService extends WearableListenerService {
 
 
     // Retrieve and Send the slots for a specific schedule.
-    private void retrieveSlots(final String day) {
+    private void retrieveSlots(final String countryCode, final String day) {
+
+        Conference conference = getConference(countryCode);
+        if (conference == null) {
+            return;
+        }
+
+        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        if (methods == null) {
+            return;
+        }
+
 
         Callback callback = new Callback() {
             @Override
@@ -335,7 +455,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendSLots(slotList.getSlots(), day);
+                sendSLots(countryCode, slotList.getSlots(), day);
             }
 
             @Override
@@ -344,18 +464,18 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        mMethods.getSchedule(mConferenceName, day, callback);
+        methods.getSchedule(conference.getName(), day, callback);
     }
 
 
     // Send the schedule's slots to the watch.
-    private void sendSLots(List<Slot> slotList, String day) {
+    private void sendSLots(String countryCode, List<Slot> slotList, String day) {
 
         if (slotList == null) {
             return;
         }
 
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SLOTS_PATH + "/" + day);
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SLOTS_PATH + "/" + countryCode + "/" + day);
 
         ArrayList<DataMap> slotsDataMap = new ArrayList<>();
 
@@ -412,7 +532,17 @@ public class WearService extends WearableListenerService {
 
 
     // Send the talk to the watch.
-    public void retrieveTalk(final String talkId) {
+    public void retrieveTalk(final String countryCode, final String talkId) {
+
+        Conference conference = getConference(countryCode);
+        if (conference == null) {
+            return;
+        }
+
+        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        if (methods == null) {
+            return;
+        }
 
         // retrieve the talk from the server
         Callback callback = new Callback() {
@@ -424,7 +554,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendTalk(talk);
+                sendTalk(countryCode, talk);
             }
 
             @Override
@@ -433,15 +563,15 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        mMethods.getTalk(mConferenceName, talkId, callback);
+        methods.getTalk(conference.getName(), talkId, callback);
     }
 
 
     /**
      * Send the talk to the watch.
      */
-    private void sendTalk(Talk talk) {
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.TALK_PATH + "/" + talk.getId());
+    private void sendTalk(String countryCode, Talk talk) {
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.TALK_PATH + "/" + countryCode + "/" + talk.getId());
 
         final DataMap talkDataMap = new DataMap();
 
@@ -496,7 +626,17 @@ public class WearService extends WearableListenerService {
 
 
     // Retrieve and Send the detail of a speaker.
-    public void retrieveSpeaker(String speakerId) {
+    public void retrieveSpeaker(final String countryCode, String speakerId) {
+
+        Conference conference = getConference(countryCode);
+        if (conference == null) {
+            return;
+        }
+
+        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        if (methods == null) {
+            return;
+        }
 
         // retrieve the speaker from the server
         Callback callback = new Callback() {
@@ -508,7 +648,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendSpeaker(speaker);
+                sendSpeaker(countryCode, speaker);
             }
 
             @Override
@@ -517,13 +657,16 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        mMethods.getSpeaker(mConferenceName, speakerId, callback);
+        methods.getSpeaker(conference.getName(), speakerId, callback);
     }
 
 
     // Send the speaker's detail to the watch.
-    private void sendSpeaker(final Speaker speaker) {
-        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SPEAKER_PATH + "/" + speaker.getUuid());
+    private void sendSpeaker(String countryCode, final Speaker speaker) {
+
+        final String dataPath = Constants.SPEAKER_PATH + "/" + countryCode + "/" + speaker.getUuid();
+
+        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(dataPath);
 
         final DataMap speakerDataMap = new DataMap();
 
@@ -553,53 +696,82 @@ public class WearService extends WearableListenerService {
 
         // retrieve and send speaker's image (if any)
         if (speaker.getAvatarURL() != null) {
+
+            final ImageTarget imageTarget = new ImageTarget(dataPath, speakerDataMap);
+
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    Picasso.with(getApplicationContext())
+                    Picasso.with(WearService.this)
                             .load(speaker.getAvatarURL())
                             .resize(100, 100)
                             .centerCrop()
-                            .into(new Target() {
-                                @Override
-                                public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-                                    byte[] byteArray = byteArrayOutputStream.toByteArray();
-
-                                    String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
-
-                                    // update the data map with the avatar
-                                    speakerDataMap.putString("avatarImage", encoded);
-
-
-                                    // as the datamap has changed, a onDataChanged event will be fired on the remote node
-
-                                    // store the list in the datamap to send it to the wear
-                                    PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SPEAKER_PATH + "/" + speaker.getUuid());
-                                    putDataMapRequest.getDataMap().putDataMap(Constants.DETAIL_PATH, speakerDataMap);
-
-                                    // send the speaker
-                                    if (mApiClient.isConnected()) {
-                                        Wearable.DataApi.putDataItem(mApiClient, putDataMapRequest.asPutDataRequest());
-                                    }
-                                }
-
-                                @Override
-                                public void onBitmapFailed(Drawable errorDrawable) {
-
-                                }
-
-                                @Override
-                                public void onPrepareLoad(Drawable placeHolderDrawable) {
-
-                                }
-                            });
+                            .into(imageTarget);
                 }
             });
-
         }
     }
+
+    public class ImageTarget implements Target {
+
+        private String mDataPath;
+        private DataMap mSpeakerDataMap;
+
+
+        public ImageTarget(String dataPath, DataMap speakerDataMap) {
+            mDataPath = dataPath;
+            mSpeakerDataMap = speakerDataMap;
+        }
+
+        @Override
+        public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+
+            String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
+            // update the data map with the avatar
+            mSpeakerDataMap.putString("avatarImage", encoded);
+
+
+            // as the datamap has changed, a onDataChanged event will be fired on the remote node
+
+            // store the list in the datamap to send it to the wear
+            final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(mDataPath);
+            putDataMapRequest.getDataMap().putDataMap(Constants.DETAIL_PATH, mSpeakerDataMap);
+
+            // send the speaker
+            // event not more defined on the calendar -> inform the watch
+            mApiClient = new GoogleApiClient.Builder(getApplicationContext())
+                    .addApi(Wearable.API)
+                    .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                        @Override
+                        public void onConnected(Bundle bundle) {
+                            Wearable.DataApi.putDataItem(mApiClient, putDataMapRequest.asPutDataRequest());
+                        }
+
+                        @Override
+                        public void onConnectionSuspended(int cause) {
+
+                        }
+                    }).build();
+            mApiClient.connect();
+        }
+
+        @Override
+        public void onBitmapFailed(Drawable errorDrawable) {
+            Log.d(TAG, "onBitmapFailed!!! ");
+
+        }
+
+        @Override
+        public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+        }
+
+    }
+
 
 
 }

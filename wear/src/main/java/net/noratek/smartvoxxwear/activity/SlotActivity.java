@@ -60,20 +60,26 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
     // Schedule's day
     private String mDayOfWeek;
 
+    // Conference information
+    private String mCountryCode;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
 
         // Retrieve the schedule's link
+        mCountryCode = "BE";
         mDayOfWeek = "monday";
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             mDayOfWeek = bundle.getString("dayOfWeek");
+            mCountryCode = bundle.getString("countryCode");
         }
 
         // Compose the data path
-        mDataPath = Constants.SLOTS_PATH + "/" + mDayOfWeek;
+        mDataPath = Constants.SLOTS_PATH + "/" + mCountryCode + "/" + mDayOfWeek;
 
 
         setContentView(R.layout.slot_activity);
@@ -172,6 +178,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
         Intent slotIntent = new Intent(SlotActivity.this, TalkActivity.class);
 
         Bundle b = new Bundle();
+        b.putString("countryCode", mCountryCode);
         b.putString("talkId", slot.getTalk().getId());
         b.putString("talkTitle", slot.getTalk().getTitle());
         b.putString("roomName", slot.getRoomName());
@@ -204,7 +211,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
 
         for (DataEvent event : dataEventBuffer) {
             // Check if we have received our slot
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(mDataPath)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.SLOTS_PATH + "/" + mCountryCode + "/" + mDayOfWeek)) {
 
                 SlotsWrapper slotsWrapper = new SlotsWrapper();
 
@@ -251,7 +258,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
     // Get Slots from the data items repository (cache).
     // If not available, we get the data from the Mobile device.
     //
-    private void getSlotsFromCache(final String pathToContent) {
+    private void getSlotsFromCache(String pathToContent) {
         Uri uri = new Uri.Builder()
                 .scheme(PutDataRequest.WEAR_URI_SCHEME)
                 .path(pathToContent)
@@ -265,7 +272,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
 
                                 if (dataItems.getCount() == 0) {
                                     // refresh the list of slots from Mobile
-                                    sendMessage(Constants.SLOTS_PATH, mDayOfWeek);
+                                    sendMessage(Constants.SLOTS_PATH + "/" + mCountryCode, mDayOfWeek);
                                     dataItems.release();
                                     return;
                                 }
@@ -274,7 +281,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
                                 DataMap dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
                                 if (dataMap == null) {
                                     // unable to fetch data -> refresh the list of slots from Mobile
-                                    sendMessage(Constants.SLOTS_PATH, mDayOfWeek);
+                                    sendMessage(Constants.SLOTS_PATH + "/" + mCountryCode, mDayOfWeek);
                                     dataItems.release();
                                     return;
                                 }

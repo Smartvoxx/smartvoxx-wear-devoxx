@@ -13,7 +13,6 @@ import android.widget.TextView;
 
 import net.noratek.smartvoxx.common.model.Talk;
 import net.noratek.smartvoxxwear.R;
-import net.noratek.smartvoxxwear.adapter.SimplePage;
 import net.noratek.smartvoxxwear.event.AddFavoriteEvent;
 import net.noratek.smartvoxxwear.event.FavoriteEvent;
 import net.noratek.smartvoxxwear.event.GetTalkEvent;
@@ -37,8 +36,6 @@ public class TalkFragment extends Fragment {
 
     private Talk mTalk;
 
-    private SimplePage mPageSettings;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +47,7 @@ public class TalkFragment extends Fragment {
 
         EventBus.getDefault().register(this);
 
-        mPageSettings = (SimplePage) (getArguments() != null ? getArguments().getSerializable("pageInfo") : null);
+        final String pageTitle = (getArguments() != null ? getArguments().getString("talkTitle") : "");
 
 
         mMainView = inflater.inflate(R.layout.talk_fragment, container, false);
@@ -61,10 +58,7 @@ public class TalkFragment extends Fragment {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
                 // Set the title if any
-                if (mPageSettings != null) {
-                    String talklTitle = mPageSettings.getTitle() != null ? mPageSettings.getTitle() : "";
-                    ((TextView) mMainView.findViewById(R.id.title)).setText(talklTitle);
-                }
+                ((TextView) mMainView.findViewById(R.id.title)).setText(pageTitle);
 
                 // add event listener
                 mMainView.findViewById(R.id.favorite).setOnClickListener(new View.OnClickListener() {

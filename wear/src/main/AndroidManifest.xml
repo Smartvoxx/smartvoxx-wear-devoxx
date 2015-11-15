@@ -11,6 +11,15 @@
         android:theme="@android:style/Theme.DeviceDefault" >
         <activity
             android:name=".activity.ScheduleActivity"
+            android:theme="@android:style/Theme.DeviceDefault.Light">
+        </activity>
+
+        <activity android:name=".activity.WindowActivity"
+            android:theme="@android:style/Theme.DeviceDefault.Light">
+        </activity>
+
+        <activity android:name=".activity.ConferenceActivity"
+            android:theme="@android:style/Theme.DeviceDefault.Light"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -18,11 +27,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".activity.WindowActivity"
-            android:theme="@android:style/Theme.DeviceDefault.Light">
-        </activity>
-
 
         <activity
             android:name=".activity.SlotActivity"

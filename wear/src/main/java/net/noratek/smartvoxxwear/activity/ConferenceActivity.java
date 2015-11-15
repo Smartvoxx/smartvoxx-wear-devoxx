@@ -24,17 +24,23 @@ import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
-import net.noratek.smartvoxx.common.model.Schedule;
+import net.noratek.smartvoxx.common.model.Conference;
 import net.noratek.smartvoxx.common.utils.Constants;
 import net.noratek.smartvoxxwear.R;
-import net.noratek.smartvoxxwear.wrapper.SchedulesListWrapper;
+import net.noratek.smartvoxxwear.wrapper.ConferencesListWrapper;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class ScheduleActivity extends Activity implements WearableListView.ClickListener, GoogleApiClient.ConnectionCallbacks, DataApi.DataListener {
+/**
+ * Created by eloudsa on 12/11/15.
+ */
+public class ConferenceActivity extends Activity implements WearableListView.ClickListener, GoogleApiClient.ConnectionCallbacks, DataApi.DataListener {
 
-    private final static String TAG = ScheduleActivity.class.getCanonicalName();
+    private final static String TAG = ConferenceActivity.class.getCanonicalName();
 
     // Google Play Services
     private GoogleApiClient mApiClient;
@@ -46,39 +52,34 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
     // Avoid double tap
     private Boolean mClicked = false;
 
-    // Conference information
-    private String mCountryCode;
+    //create a counter to count the number of instances of this activity
+    public static AtomicInteger mActivitiesLaunched = new AtomicInteger(0);
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
 
-        // selected conference
-        mCountryCode = "BE";
-        Bundle bundle = getIntent().getExtras();
-        if (bundle != null) {
-            mCountryCode = bundle.getString("countryCode");
+        // if launching will create more than one instance of this activity, bail out
+        if (mActivitiesLaunched.incrementAndGet() > 1) {
+            finish();
         }
 
-        setContentView(R.layout.schedule_activity);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.conference_activity);
         final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
 
-                // change the title
-                ((TextView) findViewById(R.id.title)).setText(getString(R.string.welcome_devoxx) + " " + mCountryCode);
-
                 // Listview component
                 mListView = (WearableListView) findViewById(R.id.wearable_list);
 
                 // Assign the adapter
-                mListViewAdapter = new ListViewAdapter(ScheduleActivity.this, new ArrayList<Schedule>());
+                mListViewAdapter = new ListViewAdapter(ConferenceActivity.this, new ArrayList<Conference>());
                 mListView.setAdapter(mListViewAdapter);
 
                 // Set the click listener
-                mListView.setClickListener(ScheduleActivity.this);
+                mListView.setClickListener(ConferenceActivity.this);
             }
         });
     }
@@ -91,7 +92,15 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         mClicked = false;
 
         // Retrieve and display the list of schedules
-        getSchedulesFromCache(Constants.SCHEDULES_PATH + "/" + mCountryCode);
+        getConferencesFromCache(Constants.CONFERENCES_PATH);
+    }
+
+    @Override
+    protected void onDestroy() {
+        //remove this activity from the counter
+        mActivitiesLaunched.getAndDecrement();
+
+        super.onDestroy();
     }
 
     @Override
@@ -139,19 +148,18 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         for (DataEvent event : dataEventBuffer) {
 
             // Check if we have received our schedules
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.SCHEDULES_PATH)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CONFERENCES_PATH)) {
 
-                SchedulesListWrapper schedulesListWrapper = new SchedulesListWrapper();
+                ConferencesListWrapper conferencesListWrapper = new ConferencesListWrapper();
 
-                final List<Schedule> schedulesList = schedulesListWrapper.getSchedulesList(event);
+                final List<Conference> conferencesList = conferencesListWrapper.getConferencesList(event);
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         // hide the progress bar
                         findViewById(R.id.progressBar).setVisibility(View.GONE);
-
-                        mListViewAdapter.refresh(schedulesList);
+                        mListViewAdapter.refresh(conferencesList);
                     }
                 });
 
@@ -162,10 +170,10 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
     }
 
 
-    // Get Schedules from the data items repository (cache).
+    // Get Conferences from the data items repository (cache).
     // If not available, we refresh the data from the Mobile device.
     //
-    private void getSchedulesFromCache(final String pathToContent) {
+    private void getConferencesFromCache(final String pathToContent) {
         Uri uri = new Uri.Builder()
                 .scheme(PutDataRequest.WEAR_URI_SCHEME)
                 .path(pathToContent)
@@ -177,26 +185,23 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
                             @Override
                             public void onResult(DataItemBuffer dataItems) {
 
-                                if (dataItems.getCount() == 0) {
-                                    // refresh the list of schedules from Mobile
-                                    sendMessage(pathToContent, "get list of schedules");
-                                    dataItems.release();
-                                    return;
+                               DataMap dataMap = null;
+
+                                if (dataItems.getCount() > 0) {
+                                    dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
                                 }
 
-                                // retrieve the schedule from the cache
-                                DataMap dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
                                 if (dataMap == null) {
-                                    // unable to fetch data -> refresh the list of schedules from Mobile
-                                    sendMessage(pathToContent, "get list of schedules");
+                                    // refresh the list of conferences from Mobile
+                                    sendMessage(Constants.CONFERENCES_PATH, "get list of conferences");
                                     dataItems.release();
                                     return;
                                 }
 
-                                // retrieve and display the schedule from the cache
-                                SchedulesListWrapper schedulesListWrapper = new SchedulesListWrapper();
+                                // retrieve and display the conferences from the cache
+                                ConferencesListWrapper conferencesListWrapper = new ConferencesListWrapper();
 
-                                final List<Schedule> schedulesList = schedulesListWrapper.getSchedulesList(dataMap);
+                                final List<Conference> conferencesList = conferencesListWrapper.getConferencesList(dataMap);
 
                                 dataItems.release();
 
@@ -205,8 +210,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
                                     public void run() {
                                         // hide the progress bar
                                         findViewById(R.id.progressBar).setVisibility(View.GONE);
-
-                                        mListViewAdapter.refresh(schedulesList);
+                                        mListViewAdapter.refresh(conferencesList);
                                     }
                                 });
                             }
@@ -233,22 +237,21 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
             return;
         }
 
-        Schedule schedule = (Schedule) viewHolder.itemView.getTag();
-        if (schedule == null) {
+        Conference conference = (Conference) viewHolder.itemView.getTag();
+        if (conference == null) {
             return;
         }
 
         mClicked = true;
 
-        // display slots for this schedule
-        Intent scheduleIntent = new Intent(ScheduleActivity.this, SlotActivity.class);
+        // display schedules for this conference
+        Intent scheduleIntent = new Intent(ConferenceActivity.this, ScheduleActivity.class);
 
         Bundle b = new Bundle();
-        b.putString("countryCode", mCountryCode);
-        b.putString("dayOfWeek", schedule.getDay());
+        b.putString("countryCode", conference.getCountryCode());
         scheduleIntent.putExtras(b);
 
-        ScheduleActivity.this.startActivity(scheduleIntent);
+        ConferenceActivity.this.startActivity(scheduleIntent);
     }
 
     @Override
@@ -259,13 +262,13 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
     // Inner class providing the WearableListview's adapter
     public class ListViewAdapter extends WearableListView.Adapter {
-        private List<Schedule> mDataset;
+        private List<Conference> mDataset;
         private final Context mContext;
 
         // Provide a suitable constructor (depends on the kind of dataset)
-        public ListViewAdapter(Context context, List<Schedule> schedulesList) {
+        public ListViewAdapter(Context context, List<Conference> conferencesList) {
             mContext = context;
-            this.mDataset = schedulesList;
+            this.mDataset = conferencesList;
         }
 
         // Provide a reference to the type of views we're using
@@ -299,13 +302,12 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
             ItemViewHolder itemHolder = (ItemViewHolder) holder;
             TextView view = itemHolder.textView;
 
-            // retrieve, transform and display the schedule's day
-            Schedule schedule = mDataset.get(position);
-            String scheduleDay = schedule.getTitle().replace(",", "\n");
-            view.setText(scheduleDay);
+            // retrieve, transform and display the conference
+            Conference conference= mDataset.get(position);
+            view.setText(conference.getTitle());
 
             // replace list item's metadata
-            holder.itemView.setTag(schedule);
+            holder.itemView.setTag(conference);
         }
 
         // Return the size of your dataset
@@ -318,8 +320,15 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
             return mDataset.size();
         }
 
-        public void refresh(List<Schedule> schedulesList) {
-            mDataset = schedulesList;
+        public void refresh(List<Conference> conferencesList) {
+            mDataset = conferencesList;
+
+            Collections.sort(mDataset, new Comparator<Conference>() {
+                @Override
+                public int compare(Conference conferenceA, Conference conferenceB) {
+                    return conferenceA.getCountryCode().compareTo(conferenceB.getCountryCode());
+                }
+            });
 
             // reload the listview
             notifyDataSetChanged();
@@ -350,6 +359,5 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         }
 
     }
-
 
 }
