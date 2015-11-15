@@ -53,7 +53,10 @@ public class MobileActivity extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_mobile, menu);
 
-        MenuItem versionMenuItem = menu.findItem(R.id.action_version);
+        MenuItem versionMenuItem = menu.findItem(R.id.action_clear_cache);
+        versionMenuItem.setTitle(getString(R.string.refresh));
+
+        versionMenuItem = menu.findItem(R.id.action_version);
         versionMenuItem.setTitle(getString(R.string.app_version) + " " + mVersionName);
 
         return true;
@@ -100,7 +103,7 @@ public class MobileActivity extends AppCompatActivity {
 
         builder.setMessage(getString(R.string.dialog_message));
 
-        builder.setTitle(getString(R.string.dialog_title));
+        builder.setTitle(getString(R.string.refresh));
 
         builder.setPositiveButton(getString(R.string.dialog_yes), new DialogInterface.OnClickListener() {
             @Override

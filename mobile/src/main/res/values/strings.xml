@@ -8,7 +8,7 @@
     <string name="action_clear_cache">Clear Cache</string>
     <string name="clear_cache_info">The local cache used by the watch has been cleared.</string>
 
-    <string name="dialog_title">Refresh</string>
+    <string name="refresh">Refresh</string>
     <string name="dialog_message">\'Refresh\' clears the cache used by the watch. This action is required if the planning of your conference has been changed.\n\nDo you want to continue?</string>
     <string name="dialog_yes">Yes</string>
     <string name="dialog_no">No</string>
