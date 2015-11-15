@@ -16,7 +16,7 @@ import net.noratek.smartvoxxwear.R;
 
 public class MobileActivity extends AppCompatActivity {
 
-    private  GoogleApiClient googleApiClient;
+    private  GoogleApiClient mGoogleApiClient;
 
 
     @Override
@@ -42,18 +42,20 @@ public class MobileActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
 
-            googleApiClient = new GoogleApiClient.Builder(getApplicationContext())
+            mGoogleApiClient = new GoogleApiClient.Builder(getApplicationContext())
                     .addApi(Wearable.API)
                     .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
                         @Override
                         public void onConnected(Bundle bundle) {
 
-                            Uri uri = new Uri.Builder()
-                                    .scheme(PutDataRequest.WEAR_URI_SCHEME)
-                                    .path(Constants.SPEAKER_PATH)
-                                    .build();
-
-                            Wearable.DataApi.deleteDataItems(googleApiClient, uri, DataApi.FILTER_PREFIX);
+                            deleteItems(Constants.FAVORITE_PATH);
+                            deleteItems(Constants.SPEAKER_PATH);
+                            deleteItems(Constants.CONFERENCES_PATH);
+                            deleteItems(Constants.SCHEDULES_PATH);
+                            deleteItems(Constants.SLOTS_PATH);
+                            deleteItems(Constants.SPEAKERS_PATH);
+                            deleteItems(Constants.TALK_PATH);
+                            deleteItems(Constants.SPEAKERS_PATH);
                         }
 
                         @Override
@@ -61,7 +63,7 @@ public class MobileActivity extends AppCompatActivity {
 
                         }
                     }).build();
-            googleApiClient.connect();
+            mGoogleApiClient.connect();
 
 
 
@@ -69,5 +71,17 @@ public class MobileActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+
+    private void deleteItems(String dataPath) {
+
+        Uri uri = new Uri.Builder()
+                .scheme(PutDataRequest.WEAR_URI_SCHEME)
+                .path(dataPath)
+                .build();
+
+        Wearable.DataApi.deleteDataItems(mGoogleApiClient, uri, DataApi.FILTER_PREFIX);
+
     }
 }
