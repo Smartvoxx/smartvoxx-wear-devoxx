@@ -1,8 +1,17 @@
 <resources>
     <string name="app_name">Smartvoxx</string>
 
-    <string name="hello_world">Hello Devoxx!</string>
-    <string name="action_settings">Settings</string>
+    <string name="app_version">Version</string>
+
+
+    <!-- Clear the Data API cache -->
+    <string name="action_clear_cache">Clear Cache</string>
+    <string name="clear_cache_info">The local cache used by the watch has been cleared.</string>
+
+    <string name="dialog_title">Refresh</string>
+    <string name="dialog_message">\'Refresh\' clears the cache used by the watch. This action is required if the planning of your conference has been changed.\n\nDo you want to continue?</string>
+    <string name="dialog_yes">Yes</string>
+    <string name="dialog_no">No</string>
 
 
     <!-- REST API for Devoxx -->
