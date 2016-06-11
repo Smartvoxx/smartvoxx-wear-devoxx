@@ -62,6 +62,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
 
     // Conference information
     private String mCountryCode;
+    private String mServerUrl;
 
 
     @Override
@@ -76,6 +77,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
         if (bundle != null) {
             mDayOfWeek = bundle.getString("dayOfWeek");
             mCountryCode = bundle.getString("countryCode");
+            mServerUrl = bundle.getString("serverUrl");
         }
 
         // Compose the data path
@@ -154,6 +156,19 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
         }).start();
     }
 
+    protected void sendMessage(final String path, final byte[] message) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // broadcast the message to all connected devices
+                final NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mApiClient).await();
+                for (Node node : nodes.getNodes()) {
+                    Wearable.MessageApi.sendMessage(mApiClient, node.getId(), path, message);
+
+                }
+            }
+        }).start();
+    }
 
     @Override
     public void onClick(WearableListView.ViewHolder viewHolder) {
@@ -178,6 +193,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
         Intent slotIntent = new Intent(SlotActivity.this, TalkActivity.class);
 
         Bundle b = new Bundle();
+        b.putString("serverUrl", mServerUrl);
         b.putString("countryCode", mCountryCode);
         b.putString("talkId", slot.getTalk().getId());
         b.putString("talkTitle", slot.getTalk().getTitle());
@@ -270,9 +286,15 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
                             @Override
                             public void onResult(DataItemBuffer dataItems) {
 
+                                // Prepare the data map
+                                DataMap dataMessageMap = new DataMap();
+                                dataMessageMap.putString("dayOfWeek", mDayOfWeek);
+                                dataMessageMap.putString("serverUrl", mServerUrl);
+
+
                                 if (dataItems.getCount() == 0) {
                                     // refresh the list of slots from Mobile
-                                    sendMessage(Constants.SLOTS_PATH + "/" + mCountryCode, mDayOfWeek);
+                                    sendMessage(Constants.SLOTS_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }
@@ -281,7 +303,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
                                 DataMap dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
                                 if (dataMap == null) {
                                     // unable to fetch data -> refresh the list of slots from Mobile
-                                    sendMessage(Constants.SLOTS_PATH + "/" + mCountryCode, mDayOfWeek);
+                                    sendMessage(Constants.SLOTS_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }

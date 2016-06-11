@@ -101,19 +101,19 @@ public class WearService extends WearableListenerService {
 
         if (path.startsWith(Constants.SLOTS_PATH)) {
             countryCode = Utils.getLastPartUrl(path);
-            retrieveSlots(countryCode, data);
+            retrieveSlots(countryCode, messageEvent.getData());
             return;
         }
 
         if (path.startsWith(Constants.TALK_PATH)) {
             countryCode = Utils.getLastPartUrl(path);
-            retrieveTalk(countryCode, data);
+            retrieveTalk(countryCode, messageEvent.getData());
             return;
         }
 
         if (path.startsWith(Constants.SPEAKER_PATH)) {
             countryCode = Utils.getLastPartUrl(path);
-            retrieveSpeaker(countryCode, data);
+            retrieveSpeaker(countryCode, messageEvent.getData());
             return;
         }
 
@@ -514,14 +514,20 @@ public class WearService extends WearableListenerService {
 
 
     // Retrieve and Send the slots for a specific schedule.
-    private void retrieveSlots(final String countryCode, final String day) {
+    private void retrieveSlots(final String countryCode, byte[] inputData) {
 
-        Conference conference = getConference(countryCode);
-        if (conference == null) {
+        DataMap inputMap = DataMap.fromByteArray(inputData);
+        if (inputMap == null) {
             return;
         }
 
-        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        // Retrieve the params
+        final String serverUrl = inputMap.getString("serverUrl");
+        final String dayOfWeek = inputMap.getString("dayOfWeek");
+
+        final String endpoint = serverUrl.substring(0, serverUrl.lastIndexOf('/'));
+
+        DevoxxApi methods = getRestClient(endpoint);
         if (methods == null) {
             return;
         }
@@ -536,7 +542,7 @@ public class WearService extends WearableListenerService {
                     return;
                 }
 
-                sendSLots(countryCode, slotList.getSlots(), day);
+                sendSLots(countryCode, slotList.getSlots(), dayOfWeek);
             }
 
             @Override
@@ -545,7 +551,7 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        methods.getSchedule(conference.getName(), day, callback);
+        methods.getSchedule(Uri.parse(serverUrl).getLastPathSegment(), dayOfWeek, callback);
     }
 
 
@@ -613,17 +619,24 @@ public class WearService extends WearableListenerService {
 
 
     // Send the talk to the watch.
-    public void retrieveTalk(final String countryCode, final String talkId) {
+    public void retrieveTalk(final String countryCode, byte[] inputData) {
 
-        Conference conference = getConference(countryCode);
-        if (conference == null) {
+        DataMap inputMap = DataMap.fromByteArray(inputData);
+        if (inputMap == null) {
             return;
         }
 
-        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        // Retrieve the params
+        final String serverUrl = inputMap.getString("serverUrl");
+        final String talkId = inputMap.getString("talkId");
+
+        final String endpoint = serverUrl.substring(0, serverUrl.lastIndexOf('/'));
+
+        DevoxxApi methods = getRestClient(endpoint);
         if (methods == null) {
             return;
         }
+
 
         // retrieve the talk from the server
         Callback callback = new Callback() {
@@ -644,7 +657,7 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        methods.getTalk(conference.getName(), talkId, callback);
+        methods.getTalk(Uri.parse(serverUrl).getLastPathSegment(), talkId, callback);
     }
 
 
@@ -707,14 +720,20 @@ public class WearService extends WearableListenerService {
 
 
     // Retrieve and Send the detail of a speaker.
-    public void retrieveSpeaker(final String countryCode, String speakerId) {
+    public void retrieveSpeaker(final String countryCode, byte[] inputData) {
 
-        Conference conference = getConference(countryCode);
-        if (conference == null) {
+        DataMap inputMap = DataMap.fromByteArray(inputData);
+        if (inputMap == null) {
             return;
         }
 
-        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        // Retrieve the params
+        final String serverUrl = inputMap.getString("serverUrl");
+        final String speakerId = inputMap.getString("speakerId");
+
+        final String endpoint = serverUrl.substring(0, serverUrl.lastIndexOf('/'));
+
+        DevoxxApi methods = getRestClient(endpoint);
         if (methods == null) {
             return;
         }
@@ -738,7 +757,7 @@ public class WearService extends WearableListenerService {
 
             }
         };
-        methods.getSpeaker(conference.getName(), speakerId, callback);
+        methods.getSpeaker(Uri.parse(serverUrl).getLastPathSegment(), speakerId, callback);
     }
 
 

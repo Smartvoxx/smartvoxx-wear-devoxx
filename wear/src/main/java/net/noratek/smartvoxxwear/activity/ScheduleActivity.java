@@ -246,6 +246,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         Intent scheduleIntent = new Intent(ScheduleActivity.this, SlotActivity.class);
 
         Bundle b = new Bundle();
+        b.putString("serverUrl", mServerUrl);
         b.putString("countryCode", mCountryCode);
         b.putString("dayOfWeek", schedule.getDay());
         scheduleIntent.putExtras(b);

@@ -74,6 +74,8 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
     // Conference information
     private String mCountryCode;
+    private String mServerUrl;
+
 
 
     @Override
@@ -84,6 +86,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
         mTalkId = "";
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
+            mServerUrl = bundle.getString("serverUrl");
             mCountryCode = bundle.getString("countryCode");
             mTalkId = bundle.getString("talkId");
             mTalkTitle = bundle.getString("talkTitle");
@@ -312,9 +315,14 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
                                     dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
                                 }
 
+                                // Prepare the data map
+                                DataMap dataMessageMap = new DataMap();
+                                dataMessageMap.putString("talkId", mTalkId);
+                                dataMessageMap.putString("serverUrl", mServerUrl);
+
                                 if (dataMap == null) {
                                     // unable to fetch data -> retrieve the talk from the Mobile
-                                    sendMessage(Constants.TALK_PATH + "/" + mCountryCode, mTalkId);
+                                    sendMessage(Constants.TALK_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }
@@ -436,9 +444,14 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
                                     dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
                                 }
 
+                                // Prepare the data map
+                                DataMap dataMessageMap = new DataMap();
+                                dataMessageMap.putString("speakerId", speakerId);
+                                dataMessageMap.putString("serverUrl", mServerUrl);
+
                                 if (dataMap == null) {
                                     // unable to fetch data -> refresh the list of slots from Mobile
-                                    sendMessage(Constants.SPEAKER_PATH + "/" + mCountryCode, speakerId);
+                                    sendMessage(Constants.SPEAKER_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }

@@ -27,4 +27,12 @@ public class Constants {
     public static final String TWITTER_PATH = "/twitter";
 
     public static final String WAKEUP_PATH = "/wake-up";
+
+
+    // Data path
+    public static final String HEADER_PATH = "/header";
+
+    // Message fields
+    public static final String DATAMAP_TIMESTAMP = "timestamp";
+
 }
