@@ -249,6 +249,7 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
 
         Bundle b = new Bundle();
         b.putString("countryCode", conference.getCountryCode());
+        b.putString("serverUrl", conference.getServerUrl());
         scheduleIntent.putExtras(b);
 
         ConferenceActivity.this.startActivity(scheduleIntent);

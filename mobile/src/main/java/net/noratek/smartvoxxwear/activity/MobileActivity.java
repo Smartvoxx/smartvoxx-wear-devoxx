@@ -4,35 +4,31 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
-
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.PutDataRequest;
-import com.google.android.gms.wearable.Wearable;
 
 import net.noratek.smartvoxx.common.utils.Constants;
+import net.noratek.smartvoxx.common.wear.GoogleApiConnector;
 import net.noratek.smartvoxxwear.R;
 
 public class MobileActivity extends AppCompatActivity {
 
     private final static String TAG = MobileActivity.class.getCanonicalName();
 
-    private GoogleApiClient mGoogleApiClient;
     private String mVersionName;
 
+    private GoogleApiConnector mGoogleApiConnector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mobile);
 
+
+        mGoogleApiConnector = new GoogleApiConnector(this);
 
         // Retrieve the application version
         try {
@@ -47,6 +43,11 @@ public class MobileActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onStop() {
+        mGoogleApiConnector.disconnect();
+        super.onStop();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -84,19 +85,6 @@ public class MobileActivity extends AppCompatActivity {
     }
 
 
-    // Delete the Data API cache used by the smartwatch.
-    // This feature allows the watch to received the latest updates from the Phone.
-    //
-    private void deleteItems(String dataPath) {
-
-        Uri uri = new Uri.Builder()
-                .scheme(PutDataRequest.WEAR_URI_SCHEME)
-                .path(dataPath)
-                .build();
-
-        Wearable.DataApi.deleteDataItems(mGoogleApiClient, uri, DataApi.FILTER_PREFIX);
-
-    }
 
     private void showDialog() throws Exception {
         AlertDialog.Builder builder = new AlertDialog.Builder(MobileActivity.this);
@@ -108,6 +96,15 @@ public class MobileActivity extends AppCompatActivity {
         builder.setPositiveButton(getString(R.string.dialog_yes), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+
+                mGoogleApiConnector.deleteAllItems(Constants.CONFERENCES_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.FAVORITE_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.SCHEDULES_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.SLOTS_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.TALK_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.SPEAKER_PATH);
+
+                /*
                 mGoogleApiClient = new GoogleApiClient.Builder(getApplicationContext())
                         .addApi(Wearable.API)
                         .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
@@ -128,6 +125,7 @@ public class MobileActivity extends AppCompatActivity {
                             }
                         }).build();
                 mGoogleApiClient.connect();
+                */
 
             }
         });

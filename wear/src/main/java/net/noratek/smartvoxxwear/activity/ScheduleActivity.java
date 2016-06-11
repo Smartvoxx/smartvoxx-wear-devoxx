@@ -48,6 +48,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
     // Conference information
     private String mCountryCode;
+    private String mServerUrl;
 
 
     @Override
@@ -59,6 +60,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             mCountryCode = bundle.getString("countryCode");
+            mServerUrl = bundle.getString("serverUrl");
         }
 
         setContentView(R.layout.schedule_activity);
@@ -179,7 +181,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
                                 if (dataItems.getCount() == 0) {
                                     // refresh the list of schedules from Mobile
-                                    sendMessage(pathToContent, "get list of schedules");
+                                    sendMessage(pathToContent, mServerUrl);
                                     dataItems.release();
                                     return;
                                 }
@@ -188,7 +190,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
                                 DataMap dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
                                 if (dataMap == null) {
                                     // unable to fetch data -> refresh the list of schedules from Mobile
-                                    sendMessage(pathToContent, "get list of schedules");
+                                    sendMessage(pathToContent, mServerUrl);
                                     dataItems.release();
                                     return;
                                 }

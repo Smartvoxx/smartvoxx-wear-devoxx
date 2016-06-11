@@ -28,8 +28,13 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.google.android.gms:play-services:8.4.0'
 
-    // Rest API Client
-    compile 'com.squareup.retrofit:retrofit:1.9.0'
+    // Rest API Client and Gson converter
+    compile 'com.squareup.okhttp3:okhttp:3.3.1'
+    compile ('com.squareup.retrofit2:retrofit:2.0.2') {
+        exclude module: 'okhttp'
+    }
+    compile 'com.squareup.retrofit2:converter-gson:2.0.0'
+
 
 
     // Image Processing: Picasso

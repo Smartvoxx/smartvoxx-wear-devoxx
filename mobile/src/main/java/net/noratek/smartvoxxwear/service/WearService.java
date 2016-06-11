@@ -20,15 +20,16 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
 import net.noratek.smartvoxx.common.model.Conference;
+import net.noratek.smartvoxx.common.model.ConferenceApiModel;
 import net.noratek.smartvoxx.common.model.Link;
 import net.noratek.smartvoxx.common.model.Schedules;
 import net.noratek.smartvoxx.common.model.Slot;
 import net.noratek.smartvoxx.common.model.SlotList;
 import net.noratek.smartvoxx.common.model.Speaker;
 import net.noratek.smartvoxx.common.model.Talk;
+import net.noratek.smartvoxx.common.utils.Configuration;
 import net.noratek.smartvoxx.common.utils.Constants;
 import net.noratek.smartvoxx.common.utils.Utils;
-import net.noratek.smartvoxxwear.R;
 import net.noratek.smartvoxxwear.calendar.CalendarHelper;
 import net.noratek.smartvoxxwear.rest.service.DevoxxApi;
 
@@ -94,7 +95,7 @@ public class WearService extends WearableListenerService {
 
         if (path.startsWith(Constants.SCHEDULES_PATH)) {
             countryCode = Utils.getLastPartUrl(path);
-            retrieveSchedules(countryCode);
+            retrieveSchedules(countryCode, data);
             return;
         }
 
@@ -286,19 +287,93 @@ public class WearService extends WearableListenerService {
     // Retrieve the list of Devoxx conferences
     private void retrieveConferences() {
 
-        TreeMap<String, Conference> conferences = getConferences();
-        if (conferences == null) {
+        DevoxxApi methods = getRestClient(Configuration.CFP_API_URL);
+        if (methods == null) {
             return;
         }
 
-        sendConferences(conferences);
+        // retrieve the schedules list from the server
+        Callback callback = new Callback() {
+            @Override
+            public void success(Object o, Response response) {
+                // retrieve schedule from REST
+                List<ConferenceApiModel> conferenceApiModels = (List<ConferenceApiModel>) o;
+                if (conferenceApiModels == null) {
+                    Log.d(TAG, "No conferences!");
+                    return;
+                }
+
+                final TreeMap<String, Conference> conferences = new TreeMap<>();
+
+                // load list of Devoxx conferences
+                for (ConferenceApiModel conferenceApiModel : conferenceApiModels ) {
+                    Conference conference = new Conference();
+                    conference.setCountryCode(conferenceApiModel.country);
+                    conference.setName(conferenceApiModel.confDescription);
+                    conference.setTitle(conferenceApiModel.confDescription);
+                    conference.setServerUrl(conferenceApiModel.cfpEndpoint + "/" + conferenceApiModel.id);
+
+                    conferences.put(conference.getCountryCode(), conference);
+                }
+
+                sendConferences(conferences);
+            }
+
+            @Override
+            public void failure(RetrofitError retrofitError) {
+                Log.d(TAG, retrofitError.getMessage());
+            }
+        };
+        methods.getConferences(callback);
+
     }
 
 
     private TreeMap<String, Conference> getConferences() {
 
-        TreeMap<String, Conference> conferences = new TreeMap<>();
+        final TreeMap<String, Conference> conferences = new TreeMap<>();
 
+
+
+
+        DevoxxApi methods = getRestClient(Configuration.CFP_API_URL);
+        if (methods == null) {
+            return null;
+        }
+
+        // retrieve the schedules list from the server
+        Callback callback = new Callback() {
+            @Override
+            public void success(Object o, Response response) {
+                // retrieve schedule from REST
+                List<ConferenceApiModel> conferenceApiModels = (List<ConferenceApiModel>) o;
+                if (conferenceApiModels == null) {
+                    Log.d(TAG, "No conferences!");
+                    return;
+                }
+
+                // load list of Devoxx conferences
+                for (ConferenceApiModel conferenceApiModel : conferenceApiModels ) {
+                    Conference conference = new Conference();
+                    conference.setCountryCode(conferenceApiModel.country);
+                    conference.setName(conferenceApiModel.confDescription);
+                    conference.setTitle(conferenceApiModel.confDescription);
+                    conference.setServerUrl(conferenceApiModel.cfpEndpoint + "/" + conferenceApiModel.id);
+
+                    conferences.put(conference.getCountryCode(), conference);
+                }
+
+                //sendSchedules(countryCode, scheduleList.getLinks());
+            }
+
+            @Override
+            public void failure(RetrofitError retrofitError) {
+                Log.d(TAG, retrofitError.getMessage());
+            }
+        };
+        methods.getConferences(callback);
+
+/*
         // load list of Devoxx conferences
         String[] stringArray = getResources().getStringArray(R.array.conferences);
         for (String entry : stringArray) {
@@ -306,15 +381,19 @@ public class WearService extends WearableListenerService {
             Conference conference = new Conference(splitResult[0], splitResult[1], splitResult[2], splitResult[3]);
             conferences.put(conference.getCountryCode(), conference);
         }
-
+*/
         if (conferences.size() == 0) {
             return null;
         }
+
+
+
 
         return conferences;
     }
 
     private Conference getConference(String countryCode) {
+
 
         TreeMap<String, Conference> conferences = getConferences();
 
@@ -334,6 +413,11 @@ public class WearService extends WearableListenerService {
     private void sendConferences(TreeMap<String, Conference> conferences) {
         final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CONFERENCES_PATH);
 
+        // set the header (timestamp is used to force a onDataChanged event on the wearable)
+        final DataMap headerMap = new DataMap();
+        headerMap.putString(Constants.DATAMAP_TIMESTAMP, new Date().toString());
+        putDataMapRequest.getDataMap().putDataMap(Constants.HEADER_PATH, headerMap);
+
         ArrayList<DataMap> conferencesDataMap = new ArrayList<>();
 
         // process each conference
@@ -344,6 +428,7 @@ public class WearService extends WearableListenerService {
 
             // process conference's data
             conferenceDataMap.putString("countryCode", conference.getCountryCode());
+            conferenceDataMap.putString("serverUrl", conference.getServerUrl());
             conferenceDataMap.putString("title", conference.getTitle());
 
             conferencesDataMap.add(conferenceDataMap);
@@ -364,14 +449,10 @@ public class WearService extends WearableListenerService {
     //
 
     // Retrieve schedules from Devoxx
-    private void retrieveSchedules(final String countryCode) {
+    private void retrieveSchedules(final String countryCode, final String serverUrl) {
 
-        Conference conference = getConference(countryCode);
-        if (conference == null) {
-            return;
-        }
-
-        DevoxxApi methods = getRestClient(conference.getServerUrl());
+        String endpoint = serverUrl.substring(0, serverUrl.lastIndexOf('/'));
+        DevoxxApi methods = getRestClient(endpoint);
         if (methods == null) {
             return;
         }
@@ -395,7 +476,7 @@ public class WearService extends WearableListenerService {
                 Log.d(TAG, retrofitError.getMessage());
             }
         };
-        methods.getSchedules(conference.getName(), callback);
+        methods.getSchedules(Uri.parse(serverUrl).getLastPathSegment(), callback);
     }
 
 
