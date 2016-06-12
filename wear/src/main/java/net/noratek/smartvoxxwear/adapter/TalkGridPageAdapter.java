@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.wearable.view.FragmentGridPagerAdapter;
 
 import net.noratek.smartvoxx.common.model.Speaker;
+import net.noratek.smartvoxx.common.utils.Constants;
 import net.noratek.smartvoxxwear.fragment.TalkFragment;
 import net.noratek.smartvoxxwear.fragment.TalkSpeakerFragment;
 import net.noratek.smartvoxxwear.fragment.TalkSummaryFragment;
@@ -22,10 +23,6 @@ import java.util.LinkedHashMap;
 public class TalkGridPageAdapter extends FragmentGridPagerAdapter {
 
     private final static String TAG = TalkGridPageAdapter.class.getCanonicalName();
-
-    public final static String TALK_INFO = "talk-info";
-    public final static String TALK_SUMMARY = "talk-summary";
-    public final static String TALK_SPEAKER = "talk-speaker";
 
     private static int NO_BACKGROUND = 0;
 
@@ -64,8 +61,8 @@ public class TalkGridPageAdapter extends FragmentGridPagerAdapter {
 
         SimpleRow row = new SimpleRow();
 
-        row.addPages(new SimplePage(TALK_INFO, mTalkTitle, NO_BACKGROUND));
-        row.addPages(new SimplePage(TALK_SUMMARY, mTalkTitle, NO_BACKGROUND));
+        row.addPages(new SimplePage(Constants.PAGER_TALK_INFO, mTalkTitle, NO_BACKGROUND));
+        row.addPages(new SimplePage(Constants.PAGER_TALK_SUMMARY, mTalkTitle, NO_BACKGROUND));
         mPages.add(row);
 
         mRowSpeakers = new SimpleRow();
@@ -86,19 +83,19 @@ public class TalkGridPageAdapter extends FragmentGridPagerAdapter {
 
         // attach the fragment related to the position
 
-        if (page.getPageName().equalsIgnoreCase(TALK_INFO)) {
+        if (page.getPageName().equalsIgnoreCase(Constants.PAGER_TALK_INFO)) {
             // Talk details
 
             mTalkFragment = new TalkFragment();
 
-            bundle.putString("talkTitle", page.getTitle());
+            bundle.putString(Constants.DATAMAP_TITLE, page.getTitle());
             mTalkFragment.setArguments(bundle);
 
             mFragments.put(pageId, mTalkFragment);
 
             return mTalkFragment;
 
-        } else if (page.getPageName().equalsIgnoreCase(TALK_SUMMARY)) {
+        } else if (page.getPageName().equalsIgnoreCase(Constants.PAGER_TALK_SUMMARY)) {
             // Talk summary
 
             mTalkSummaryFragment = new TalkSummaryFragment();
@@ -113,7 +110,7 @@ public class TalkGridPageAdapter extends FragmentGridPagerAdapter {
         // default is a card for the speaker(s)
         mTalkSpeakerFragment = new TalkSpeakerFragment();
 
-        bundle.putString("speakerId", page.getPageId());
+        bundle.putString(Constants.DATAMAP_SPEAKER_ID, page.getPageId());
         mTalkSpeakerFragment.setArguments(bundle);
 
         mFragments.put(pageId, mTalkSpeakerFragment);
@@ -161,7 +158,7 @@ public class TalkGridPageAdapter extends FragmentGridPagerAdapter {
         }
 
         for (Speaker speaker : speakersList.values()) {
-            mRowSpeakers.addPages(new SimplePage(speaker.getUuid(), TALK_SPEAKER, "Speaker", NO_BACKGROUND));
+            mRowSpeakers.addPages(new SimplePage(speaker.getUuid(), Constants.PAGER_TALK_SPEAKER, Constants.PAGER_SPEAKER, NO_BACKGROUND));
         }
         mPages.add(mRowSpeakers);
     }

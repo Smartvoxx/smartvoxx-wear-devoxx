@@ -97,12 +97,12 @@ public class MobileActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                mGoogleApiConnector.deleteAllItems(Constants.CONFERENCES_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.FAVORITE_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.SCHEDULES_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.SLOTS_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.TALK_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.SPEAKER_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.CONFERENCES_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.FAVORITE_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.SCHEDULES_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.SLOTS_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.TALK_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.SPEAKER_PATH);
 
                 /*
                 mGoogleApiClient = new GoogleApiClient.Builder(getApplicationContext())

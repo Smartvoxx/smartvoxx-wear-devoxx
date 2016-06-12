@@ -7,7 +7,6 @@ import com.google.gson.annotations.SerializedName;
  */
 public class Slot {
 
-    private String slotId;
     private Long scheduleId;
     private Long fromTimeMillis;
     private Long toTimeMillis;
@@ -18,14 +17,6 @@ public class Slot {
 
     private Talk talk;
 
-
-    public String getSlotId() {
-        return slotId;
-    }
-
-    public void setSlotId(String slotId) {
-        this.slotId = slotId;
-    }
 
     public Long getScheduleId() {
         return scheduleId;

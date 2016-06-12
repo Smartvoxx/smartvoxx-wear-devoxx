@@ -75,13 +75,13 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
         mDayOfWeek = "monday";
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
-            mDayOfWeek = bundle.getString("dayOfWeek");
-            mCountryCode = bundle.getString("countryCode");
-            mServerUrl = bundle.getString("serverUrl");
+            mDayOfWeek = bundle.getString(Constants.DATAMAP_DAY_NAME);
+            mCountryCode = bundle.getString(Constants.DATAMAP_COUNTRY);
+            mServerUrl = bundle.getString(Constants.DATAMAP_SERVER_URL);
         }
 
         // Compose the data path
-        mDataPath = Constants.SLOTS_PATH + "/" + mCountryCode + "/" + mDayOfWeek;
+        mDataPath = Constants.CHANNEL_ID + Constants.SLOTS_PATH + "/" + mCountryCode + "/" + mDayOfWeek;
 
 
         setContentView(R.layout.slot_activity);
@@ -193,13 +193,13 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
         Intent slotIntent = new Intent(SlotActivity.this, TalkActivity.class);
 
         Bundle b = new Bundle();
-        b.putString("serverUrl", mServerUrl);
-        b.putString("countryCode", mCountryCode);
-        b.putString("talkId", slot.getTalk().getId());
-        b.putString("talkTitle", slot.getTalk().getTitle());
-        b.putString("roomName", slot.getRoomName());
-        b.putLong("fromTimeMillis", slot.getFromTimeMillis());
-        b.putLong("toTimeMillis", slot.getToTimeMillis());
+        b.putString(Constants.DATAMAP_SERVER_URL, mServerUrl);
+        b.putString(Constants.DATAMAP_COUNTRY, mCountryCode);
+        b.putString(Constants.DATAMAP_TALK_ID, slot.getTalk().getId());
+        b.putString(Constants.DATAMAP_TITLE, slot.getTalk().getTitle());
+        b.putString(Constants.DATAMAP_ROOM_NAME, slot.getRoomName());
+        b.putLong(Constants.DATAMAP_FROM_TIME_MILLIS, slot.getFromTimeMillis());
+        b.putLong(Constants.DATAMAP_TO_TIME_MILLIS, slot.getToTimeMillis());
         slotIntent.putExtras(b);
 
         SlotActivity.this.startActivity(slotIntent);
@@ -227,42 +227,21 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
 
         for (DataEvent event : dataEventBuffer) {
             // Check if we have received our slot
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.SLOTS_PATH + "/" + mCountryCode + "/" + mDayOfWeek)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CHANNEL_ID + Constants.SLOTS_PATH + "/" + mCountryCode + "/" + mDayOfWeek)) {
 
                 SlotsWrapper slotsWrapper = new SlotsWrapper();
 
                 final List<Slot> slotList = slotsWrapper.getSlotsList(event);
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        findViewById(R.id.progressBar).setVisibility(View.GONE);
-
-                        // set the schedule's date
-                        mSlotTitleView.setText(mDayOfWeek);
-
-                        mListViewAdapter.refresh(slotList);
-                    }
-                });
+                updateUI(slotList);
 
                 return;
             }
 
             // Event received when a change occurred in a favorite
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.FAVORITE_PATH)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CHANNEL_ID + Constants.FAVORITE_PATH)) {
 
-                // favorite has changed -> refresh the list
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        findViewById(R.id.progressBar).setVisibility(View.GONE);
-
-                        // set the schedule's date
-                        mSlotTitleView.setText(mDayOfWeek);
-
-                        mListViewAdapter.refresh();
-                    }
-                });
+                updateUI(null);
 
                 return;
             }
@@ -288,13 +267,13 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
 
                                 // Prepare the data map
                                 DataMap dataMessageMap = new DataMap();
-                                dataMessageMap.putString("dayOfWeek", mDayOfWeek);
-                                dataMessageMap.putString("serverUrl", mServerUrl);
+                                dataMessageMap.putString(Constants.DATAMAP_DAY_NAME, mDayOfWeek);
+                                dataMessageMap.putString(Constants.DATAMAP_SERVER_URL, mServerUrl);
 
 
                                 if (dataItems.getCount() == 0) {
                                     // refresh the list of slots from Mobile
-                                    sendMessage(Constants.SLOTS_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
+                                    sendMessage(Constants.CHANNEL_ID + Constants.SLOTS_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }
@@ -303,7 +282,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
                                 DataMap dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
                                 if (dataMap == null) {
                                     // unable to fetch data -> refresh the list of slots from Mobile
-                                    sendMessage(Constants.SLOTS_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
+                                    sendMessage(Constants.CHANNEL_ID + Constants.SLOTS_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }
@@ -315,19 +294,30 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
 
                                 dataItems.release();
 
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        // hide the progress bar
-                                        findViewById(R.id.progressBar).setVisibility(View.GONE);
-
-                                        mListViewAdapter.refresh(slotList);
-                                    }
-                                });
+                                updateUI(slotList);
                             }
                         }
                 );
     }
+
+
+    private void updateUI(final List<Slot> slotList) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.progressBar).setVisibility(View.GONE);
+
+                mSlotTitleView.setText(mDayOfWeek);
+
+                if (slotList != null) {
+                    mListViewAdapter.refresh(slotList);
+                } else {
+                    mListViewAdapter.refresh();
+                }
+            }
+        });
+    }
+
 
 
     // Inner class providing the WearableListview's adapter
@@ -407,7 +397,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
 
                 Uri uri = new Uri.Builder()
                         .scheme(PutDataRequest.WEAR_URI_SCHEME)
-                        .path(Constants.FAVORITE_PATH + "/" + slot.getTalk().getId())
+                        .path(Constants.CHANNEL_ID + Constants.FAVORITE_PATH + "/" + slot.getTalk().getId())
                         .build();
 
                 Wearable.DataApi.getDataItems(mApiClient, uri)
@@ -429,7 +419,7 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
                                             return;
                                         }
 
-                                        Long eventId = favoriteMap.getLong("eventId");
+                                        Long eventId = favoriteMap.getLong(Constants.DATAMAP_EVENT_ID);
                                         if (eventId > 0L) {
                                             favoriteImage.setVisibility(View.VISIBLE);
                                         }
@@ -520,51 +510,54 @@ public class SlotActivity extends Activity implements WearableListView.ClickList
         // we display a color related to the type of track
         private int getTrackColor(String trackId) {
 
-            if (trackId == null) {
-                return R.color.none_color;
+            int trackColor;
+
+            switch (trackId.toLowerCase()) {
+                case Constants.TRACK_STARTUP:
+                    trackColor =  R.color.startup_color;
+                    break;
+
+                case Constants.TRACK_SERVER:
+                    trackColor =  R.color.ssj_color;
+                    break;
+
+                case Constants.TRACK_JAVA:
+                    trackColor =  R.color.java_color;
+                    break;
+
+                case Constants.TRACK_MOBILE:
+                    trackColor =  R.color.mobile_color;
+                    break;
+
+                case Constants.TRACK_ARCHITECTURE:
+                    trackColor =  R.color.archisec_color;
+                    break;
+
+                case Constants.TRACK_METHODS_DEVOPS:
+                    trackColor =  R.color.methodevops_color;
+                    break;
+
+                case Constants.TRACK_FUTURE:
+                    trackColor =  R.color.future_color;
+                    break;
+
+                case Constants.TRACK_LANGUAGE:
+                    trackColor =  R.color.lang_color;
+                    break;
+
+                case Constants.TRACK_CLOUD:
+                    trackColor =  R.color.cloud_color;
+                    break;
+
+                case Constants.TRACK_WEB:
+                    trackColor =  R.color.web_color;
+                    break;
+
+                default:
+                    trackColor = R.color.none_color;
             }
 
-            if (trackId.equalsIgnoreCase("startup")) {
-                return R.color.startup_color;
-            }
-
-            if (trackId.equalsIgnoreCase("ssj")) {
-                return R.color.ssj_color;
-            }
-
-            if (trackId.equalsIgnoreCase("java")) {
-                return R.color.java_color;
-            }
-
-            if (trackId.equalsIgnoreCase("mobile")) {
-                return R.color.mobile_color;
-            }
-
-            if (trackId.equalsIgnoreCase("archisec")) {
-                return R.color.archisec_color;
-            }
-
-            if (trackId.equalsIgnoreCase("methodevops")) {
-                return R.color.methodevops_color;
-            }
-
-            if (trackId.equalsIgnoreCase("future")) {
-                return R.color.future_color;
-            }
-
-            if (trackId.equalsIgnoreCase("lang")) {
-                return R.color.lang_color;
-            }
-
-            if (trackId.equalsIgnoreCase("cloud")) {
-                return R.color.cloud_color;
-            }
-
-            if (trackId.equalsIgnoreCase("web")) {
-                return R.color.web_color;
-            }
-
-            return R.color.none_color;
+            return trackColor;
 
         }
 

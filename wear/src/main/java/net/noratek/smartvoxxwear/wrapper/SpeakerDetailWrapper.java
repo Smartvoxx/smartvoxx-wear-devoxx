@@ -38,15 +38,15 @@ public class SpeakerDetailWrapper {
 
         // retrieve the speaker's information
         Speaker speaker = new Speaker(
-                speakerDataMap.getString("uuid"),
-                speakerDataMap.getString("lastName"),
-                speakerDataMap.getString("firstName"),
-                speakerDataMap.getString("blog"),
-                speakerDataMap.getString("twitter"),
-                speakerDataMap.getString("company"),
-                speakerDataMap.getString("bio"),
-                speakerDataMap.getString("avatarURL"),
-                speakerDataMap.getString("avatarImage"));
+                speakerDataMap.getString(Constants.DATAMAP_UUID, ""),
+                speakerDataMap.getString(Constants.DATAMAP_LAST_NAME, ""),
+                speakerDataMap.getString(Constants.DATAMAP_FIRST_NAME, ""),
+                speakerDataMap.getString(Constants.DATAMAP_BLOG, ""),
+                speakerDataMap.getString(Constants.DATAMAP_TWITTER, ""),
+                speakerDataMap.getString(Constants.DATAMAP_COMPANY, ""),
+                speakerDataMap.getString(Constants.DATAMAP_BIO, ""),
+                speakerDataMap.getString(Constants.DATAMAP_AVATAR_URL, ""),
+                speakerDataMap.getString(Constants.DATAMAP_AVATAR_IMAGE, ""));
 
         return speaker;
 

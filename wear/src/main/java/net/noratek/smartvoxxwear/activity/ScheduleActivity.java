@@ -59,8 +59,8 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         mCountryCode = "BE";
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
-            mCountryCode = bundle.getString("countryCode");
-            mServerUrl = bundle.getString("serverUrl");
+            mCountryCode = bundle.getString(Constants.DATAMAP_COUNTRY);
+            mServerUrl = bundle.getString(Constants.DATAMAP_SERVER_URL);
         }
 
         setContentView(R.layout.schedule_activity);
@@ -93,7 +93,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         mClicked = false;
 
         // Retrieve and display the list of schedules
-        getSchedulesFromCache(Constants.SCHEDULES_PATH + "/" + mCountryCode);
+        getSchedulesFromCache(Constants.CHANNEL_ID + Constants.SCHEDULES_PATH + "/" + mCountryCode);
     }
 
     @Override
@@ -141,21 +141,13 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         for (DataEvent event : dataEventBuffer) {
 
             // Check if we have received our schedules
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.SCHEDULES_PATH)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CHANNEL_ID + Constants.SCHEDULES_PATH)) {
 
                 SchedulesListWrapper schedulesListWrapper = new SchedulesListWrapper();
 
                 final List<Schedule> schedulesList = schedulesListWrapper.getSchedulesList(event);
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        // hide the progress bar
-                        findViewById(R.id.progressBar).setVisibility(View.GONE);
-
-                        mListViewAdapter.refresh(schedulesList);
-                    }
-                });
+                updateUI(schedulesList);
 
                 return;
             }
@@ -202,19 +194,23 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
                                 dataItems.release();
 
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        // hide the progress bar
-                                        findViewById(R.id.progressBar).setVisibility(View.GONE);
-
-                                        mListViewAdapter.refresh(schedulesList);
-                                    }
-                                });
+                                updateUI(schedulesList);
                             }
                         }
                 );
     }
+
+
+    private void updateUI(final List<Schedule> schedulesList) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                findViewById(R.id.progressBar).setVisibility(View.GONE);
+                mListViewAdapter.refresh(schedulesList);
+            }
+        });
+    }
+
 
 
     @Override
@@ -246,9 +242,9 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         Intent scheduleIntent = new Intent(ScheduleActivity.this, SlotActivity.class);
 
         Bundle b = new Bundle();
-        b.putString("serverUrl", mServerUrl);
-        b.putString("countryCode", mCountryCode);
-        b.putString("dayOfWeek", schedule.getDay());
+        b.putString(Constants.DATAMAP_SERVER_URL, mServerUrl);
+        b.putString(Constants.DATAMAP_COUNTRY, mCountryCode);
+        b.putString(Constants.DATAMAP_DAY_NAME, schedule.getDay());
         scheduleIntent.putExtras(b);
 
         ScheduleActivity.this.startActivity(scheduleIntent);

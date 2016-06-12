@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.noratek.smartvoxx.common.model.Talk;
+import net.noratek.smartvoxx.common.utils.Constants;
 import net.noratek.smartvoxxwear.R;
 import net.noratek.smartvoxxwear.event.AddFavoriteEvent;
 import net.noratek.smartvoxxwear.event.FavoriteEvent;
@@ -47,7 +48,7 @@ public class TalkFragment extends Fragment {
 
         EventBus.getDefault().register(this);
 
-        final String pageTitle = (getArguments() != null ? getArguments().getString("talkTitle") : "");
+        final String pageTitle = (getArguments() != null ? getArguments().getString(Constants.DATAMAP_TITLE) : "");
 
 
         mMainView = inflater.inflate(R.layout.talk_fragment, container, false);

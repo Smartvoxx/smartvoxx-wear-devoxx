@@ -1,13 +1,15 @@
-package net.noratek.smartvoxxwear.rest.service;
+package net.noratek.smartvoxxwear.connection;
 
 import net.noratek.smartvoxx.common.model.ConferenceApiModel;
 
 import java.util.List;
 
+import retrofit.Callback;
 import retrofit.http.GET;
-import retrofit2.Call;
 
 public interface CfpApi {
+
     @GET("/cfpdevoxx/cfp.json")
-    Call<List<ConferenceApiModel>> conferences();
+    void getConferences(Callback<List<ConferenceApiModel>> callback);
+
 }

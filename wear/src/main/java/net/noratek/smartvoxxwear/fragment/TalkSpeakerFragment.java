@@ -49,13 +49,13 @@ public class TalkSpeakerFragment extends Fragment {
 
         mMainView = inflater.inflate(R.layout.talk_speaker_fragment, container, false);
 
-        mSpeakerId = (getArguments() != null ? getArguments().getString("speakerId") : "");
+        mSpeakerId = (getArguments() != null ? getArguments().getString(Constants.DATAMAP_SPEAKER_ID) : "");
 
         mMainView.findViewById(R.id.twitterIcon).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startConfirmationActivity(ConfirmationActivity.OPEN_ON_PHONE_ANIMATION, getString(R.string.confirmation_open_on_phone));
-                EventBus.getDefault().postLocal(new ConfirmationEvent(Constants.TWITTER_PATH, (String) mMainView.findViewById(R.id.twitterIcon).getTag()));
+                EventBus.getDefault().postLocal(new ConfirmationEvent(Constants.CHANNEL_ID + Constants.TWITTER_PATH, (String) mMainView.findViewById(R.id.twitterIcon).getTag()));
             }
         });
 

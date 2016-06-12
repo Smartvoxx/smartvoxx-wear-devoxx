@@ -54,35 +54,34 @@ public class SlotsWrapper {
             Slot slot = new Slot();
 
 
-            slot.setSlotId(slotDataMap.getString("slotId"));
-            slot.setRoomName(slotDataMap.getString("roomName"));
-            slot.setFromTimeMillis(slotDataMap.getLong("fromTimeMillis"));
-            slot.setToTimeMillis(slotDataMap.getLong("toTimeMillis"));
+            slot.setRoomName(slotDataMap.getString(Constants.DATAMAP_ROOM_NAME, ""));
+            slot.setFromTimeMillis(slotDataMap.getLong(Constants.DATAMAP_FROM_TIME_MILLIS, 0L));
+            slot.setToTimeMillis(slotDataMap.getLong(Constants.DATAMAP_TO_TIME_MILLIS, 0L));
 
 
-            DataMap breakDataMap = slotDataMap.getDataMap("break");
+            DataMap breakDataMap = slotDataMap.getDataMap(Constants.DATAMAP_BREAK);
             if (breakDataMap != null) {
                 BreakSession breakSlot = new BreakSession();
 
-                breakSlot.setId(breakDataMap.getString("id"));
-                breakSlot.setNameEN(breakDataMap.getString("nameEN"));
-                breakSlot.setNameFR(breakDataMap.getString("nameFR"));
+                breakSlot.setId(breakDataMap.getString(Constants.DATAMAP_ID, ""));
+                breakSlot.setNameEN(breakDataMap.getString(Constants.DATAMAP_NAME_EN, ""));
+                breakSlot.setNameFR(breakDataMap.getString(Constants.DATAMAP_NAME_FR, ""));
 
                 slot.setBreakSession(breakSlot);
             }
 
-            DataMap talkDataMap = slotDataMap.getDataMap("talk");
+            DataMap talkDataMap = slotDataMap.getDataMap(Constants.DATAMAP_TALK);
             if (talkDataMap != null) {
                 Talk talkSlot = new Talk();
 
-                talkSlot.setId(talkDataMap.getString("id"));
-                talkSlot.setEventId(talkDataMap.getLong("eventId"));
-                talkSlot.setLang(talkDataMap.getString("lang"));
-                talkSlot.setSummary(talkDataMap.getString("summary"));
-                talkSlot.setTalkType(talkDataMap.getString("talkType"));
-                talkSlot.setTitle(talkDataMap.getString("title"));
-                talkSlot.setTrack(talkDataMap.getString("track"));
-                talkSlot.setTrackId(talkDataMap.getString("trackId"));
+                talkSlot.setId(talkDataMap.getString(Constants.DATAMAP_ID, ""));
+                talkSlot.setEventId(talkDataMap.getLong(Constants.DATAMAP_EVENT_ID, 0L));
+                talkSlot.setLang(talkDataMap.getString(Constants.DATAMAP_LANG, ""));
+                talkSlot.setSummary(talkDataMap.getString(Constants.DATAMAP_SUMMARY, ""));
+                talkSlot.setTalkType(talkDataMap.getString(Constants.DATAMAP_TALK_TYPE, ""));
+                talkSlot.setTitle(talkDataMap.getString(Constants.DATAMAP_TITLE, ""));
+                talkSlot.setTrack(talkDataMap.getString(Constants.DATAMAP_TRACK, ""));
+                talkSlot.setTrackId(talkDataMap.getString(Constants.DATAMAP_TRACK_ID, ""));
 
                 slot.setTalk(talkSlot);
             }

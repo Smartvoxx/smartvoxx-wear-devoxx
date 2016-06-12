@@ -1,13 +1,10 @@
-package net.noratek.smartvoxxwear.rest.service;
+package net.noratek.smartvoxxwear.connection;
 
 
-import net.noratek.smartvoxx.common.model.ConferenceApiModel;
 import net.noratek.smartvoxx.common.model.Schedules;
 import net.noratek.smartvoxx.common.model.SlotList;
 import net.noratek.smartvoxx.common.model.Speaker;
 import net.noratek.smartvoxx.common.model.Talk;
-
-import java.util.List;
 
 import retrofit.Callback;
 import retrofit.http.GET;
@@ -18,9 +15,6 @@ import retrofit.http.Path;
  */
 public interface DevoxxApi {
 
-
-    @GET("/cfpdevoxx/cfp.json")
-    void getConferences(Callback<List<ConferenceApiModel>> callback);
 
     @GET("/conferences/{conference}/schedules")
     void getSchedules(@Path("conference") String conference, Callback<Schedules> callback);

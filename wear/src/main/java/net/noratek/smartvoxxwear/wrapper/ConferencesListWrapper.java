@@ -47,9 +47,9 @@ public class ConferencesListWrapper {
             // retrieve the speaker's information
 
             Conference conference = new Conference();
-            conference.setServerUrl(conferenceDataMap.getString("serverUrl"));
-            conference.setCountryCode(conferenceDataMap.getString("countryCode"));
-            conference.setTitle(conferenceDataMap.getString("title"));
+            conference.setServerUrl(conferenceDataMap.getString(Constants.DATAMAP_SERVER_URL));
+            conference.setCountryCode(conferenceDataMap.getString(Constants.DATAMAP_COUNTRY));
+            conference.setTitle(conferenceDataMap.getString(Constants.DATAMAP_TITLE));
 
             conferencesList.add(conference);
         }

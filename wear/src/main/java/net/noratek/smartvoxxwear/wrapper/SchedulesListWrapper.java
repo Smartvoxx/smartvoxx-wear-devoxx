@@ -50,8 +50,8 @@ public class SchedulesListWrapper {
             // retrieve the speaker's information
 
             schedulesList.add(new Schedule(
-                    scheduleDataMap.getString("day"),
-                    scheduleDataMap.getString("title").replaceAll("Schedule for ", "")));
+                    scheduleDataMap.getString(Constants.DATAMAP_DAY_NAME, ""),
+                    scheduleDataMap.getString(Constants.DATAMAP_TITLE).replaceAll("Schedule for ", "")));
         }
 
         return schedulesList;
