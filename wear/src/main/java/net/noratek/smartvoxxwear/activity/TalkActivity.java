@@ -125,7 +125,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
         }
 
         // Retrieve the talk
-        getTalkFromCache(Constants.CHANNEL_ID + Constants.TALK_PATH + "/" + mCountryCode + "/"  + mTalkId);
+        getTalkFromCache(Constants.TALK_PATH + "/" + mCountryCode + "/"  + mTalkId);
     }
 
 
@@ -200,7 +200,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
         for (DataEvent event : dataEventBuffer) {
             // Check if we have received our speakers
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CHANNEL_ID + Constants.TALK_PATH + "/" + mCountryCode + "/"+ mTalkId)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.TALK_PATH + "/" + mCountryCode + "/"+ mTalkId)) {
 
                 TalkWrapper talkWrapper = new TalkWrapper();
 
@@ -232,7 +232,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
 
             // Check if we have received some details for a speaker
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CHANNEL_ID + Constants.SPEAKER_PATH +  "/" + mCountryCode + "/")) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.SPEAKER_PATH +  "/" + mCountryCode + "/")) {
                 SpeakerDetailWrapper speakerDetailWrapper = new SpeakerDetailWrapper();
 
                 Speaker speaker = speakerDetailWrapper.getSpeakerDetail(event);
@@ -266,7 +266,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
             }
 
             // Event received when a change occurred in the favorite
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CHANNEL_ID + Constants.FAVORITE_PATH + "/" + mTalkId)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.FAVORITE_PATH + "/" + mTalkId)) {
                 DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
                 if (dataMapItem == null) {
                     return;
@@ -316,7 +316,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
                                 if (dataMap == null) {
                                     // unable to fetch data -> retrieve the talk from the Mobile
-                                    sendMessage(Constants.CHANNEL_ID + Constants.TALK_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
+                                    sendMessage(Constants.TALK_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }
@@ -371,7 +371,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
     //
     private void getFavoriteFromCache(final Talk talk) {
 
-        final String dataPath = Constants.CHANNEL_ID + Constants.FAVORITE_PATH + "/" + talk.getId();
+        final String dataPath = Constants.FAVORITE_PATH + "/" + talk.getId();
 
         Uri uri = new Uri.Builder()
                 .scheme(PutDataRequest.WEAR_URI_SCHEME)
@@ -400,7 +400,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
                                     favoriteDataMap.putLong(Constants.DATAMAP_TO_TIME_MILLIS, talk.getToTimeMillis());
 
                                     // unable to fetch data -> retrieve the favorite status from the Mobile
-                                    sendMessage(Constants.CHANNEL_ID + Constants.FAVORITE_PATH, favoriteDataMap.toByteArray());
+                                    sendMessage(Constants.FAVORITE_PATH, favoriteDataMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }
@@ -426,7 +426,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
     //
     private void getSpeakerFromCache(final String speakerId) {
 
-        final String dataPath = Constants.CHANNEL_ID + Constants.SPEAKER_PATH + "/" + mCountryCode + "/" + speakerId;
+        final String dataPath = Constants.SPEAKER_PATH + "/" + mCountryCode + "/" + speakerId;
 
         Uri uri = new Uri.Builder()
                 .scheme(PutDataRequest.WEAR_URI_SCHEME)
@@ -452,7 +452,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
 
                                 if (dataMap == null) {
                                     // unable to fetch data -> refresh the list of slots from Mobile
-                                    sendMessage(Constants.CHANNEL_ID + Constants.SPEAKER_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
+                                    sendMessage(Constants.SPEAKER_PATH + "/" + mCountryCode, dataMessageMap.toByteArray());
                                     dataItems.release();
                                     return;
                                 }
@@ -545,7 +545,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
         dataMap.putLong(Constants.DATAMAP_FROM_TIME_MILLIS, talk.getFromTimeMillis());
         dataMap.putLong(Constants.DATAMAP_TO_TIME_MILLIS, talk.getToTimeMillis());
 
-        sendMessage(Constants.CHANNEL_ID + Constants.ADD_FAVORITE_PATH, dataMap.toByteArray());
+        sendMessage(Constants.ADD_FAVORITE_PATH, dataMap.toByteArray());
 
     }
 
@@ -563,7 +563,7 @@ public class TalkActivity extends Activity implements GoogleApiClient.Connection
         dataMap.putString(Constants.DATAMAP_TALK_ID, removeFavoritesEvent.getTalkId());
         dataMap.putLong(Constants.DATAMAP_EVENT_ID, removeFavoritesEvent.getEventId());
 
-        sendMessage(Constants.CHANNEL_ID + Constants.REMOVE_FAVORITE_PATH, dataMap.toByteArray());
+        sendMessage(Constants.REMOVE_FAVORITE_PATH, dataMap.toByteArray());
 
     }
 }

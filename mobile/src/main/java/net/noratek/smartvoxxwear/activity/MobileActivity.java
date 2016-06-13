@@ -97,35 +97,12 @@ public class MobileActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.CONFERENCES_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.FAVORITE_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.SCHEDULES_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.SLOTS_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.TALK_PATH);
-                mGoogleApiConnector.deleteAllItems(Constants.CHANNEL_ID + Constants.SPEAKER_PATH);
-
-                /*
-                mGoogleApiClient = new GoogleApiClient.Builder(getApplicationContext())
-                        .addApi(Wearable.API)
-                        .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
-                            @Override
-                            public void onConnected(Bundle bundle) {
-                                deleteItems(Constants.FAVORITE_PATH);
-                                deleteItems(Constants.CONFERENCES_PATH);
-                                deleteItems(Constants.SCHEDULES_PATH);
-                                deleteItems(Constants.SLOTS_PATH);
-                                deleteItems(Constants.TALK_PATH);
-                                deleteItems(Constants.SPEAKER_PATH);
-
-                                Toast.makeText(MobileActivity.this, getString(R.string.clear_cache_info), Toast.LENGTH_LONG).show();
-                            }
-
-                            @Override
-                            public void onConnectionSuspended(int cause) {
-                            }
-                        }).build();
-                mGoogleApiClient.connect();
-                */
+                mGoogleApiConnector.deleteAllItems(Constants.CONFERENCES_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.FAVORITE_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.SCHEDULES_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.SLOTS_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.TALK_PATH);
+                mGoogleApiConnector.deleteAllItems(Constants.SPEAKER_PATH);
 
             }
         });

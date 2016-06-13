@@ -93,7 +93,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         mClicked = false;
 
         // Retrieve and display the list of schedules
-        getSchedulesFromCache(Constants.CHANNEL_ID + Constants.SCHEDULES_PATH + "/" + mCountryCode);
+        getSchedulesFromCache(Constants.SCHEDULES_PATH + "/" + mCountryCode);
     }
 
     @Override
@@ -141,7 +141,7 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
         for (DataEvent event : dataEventBuffer) {
 
             // Check if we have received our schedules
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CHANNEL_ID + Constants.SCHEDULES_PATH)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.SCHEDULES_PATH)) {
 
                 SchedulesListWrapper schedulesListWrapper = new SchedulesListWrapper();
 

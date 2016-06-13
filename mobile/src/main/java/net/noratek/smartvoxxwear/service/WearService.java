@@ -78,43 +78,43 @@ public class WearService extends WearableListenerService {
         String data = new String(messageEvent.getData());
 
 
-        if (path.equalsIgnoreCase(Constants.CHANNEL_ID + Constants.CONFERENCES_PATH)) {
+        if (path.equalsIgnoreCase(Constants.CONFERENCES_PATH)) {
 
             // get and send the list of conferences
             retrieveConferences();
-        } else if (path.startsWith(Constants.CHANNEL_ID + Constants.SCHEDULES_PATH)) {
+        } else if (path.startsWith(Constants.SCHEDULES_PATH)) {
 
             // get and send the list of schedules
             countryCode = Uri.parse(path).getLastPathSegment();
             retrieveSchedules(countryCode, data);
-        } else if (path.startsWith(Constants.CHANNEL_ID + Constants.SLOTS_PATH)) {
+        } else if (path.startsWith(Constants.SLOTS_PATH)) {
 
             // get and send the list of slots
             countryCode = Uri.parse(path).getLastPathSegment();
             retrieveSlots(countryCode, messageEvent.getData());
-        } else if (path.startsWith(Constants.CHANNEL_ID + Constants.TALK_PATH)) {
+        } else if (path.startsWith(Constants.TALK_PATH)) {
 
             // get and send the talk
             countryCode = Uri.parse(path).getLastPathSegment();
             retrieveTalk(countryCode, messageEvent.getData());
-        } else if (path.startsWith(Constants.CHANNEL_ID + Constants.SPEAKER_PATH)) {
+        } else if (path.startsWith(Constants.SPEAKER_PATH)) {
 
             // get and send the speaker
             countryCode = Uri.parse(path).getLastPathSegment();
             retrieveSpeaker(countryCode, messageEvent.getData());
-        } else if (path.equalsIgnoreCase(Constants.CHANNEL_ID + Constants.TWITTER_PATH)) {
+        } else if (path.equalsIgnoreCase(Constants.TWITTER_PATH)) {
 
             // display the twitter's profile
             followOnTwitter(data);
-        } else if (path.equalsIgnoreCase(Constants.CHANNEL_ID + Constants.FAVORITE_PATH)) {
+        } else if (path.equalsIgnoreCase(Constants.FAVORITE_PATH)) {
 
             // send the favorite's status of a talk
             retrieveFavorite(messageEvent.getData());
-        } else if (path.equalsIgnoreCase(Constants.CHANNEL_ID + Constants.ADD_FAVORITE_PATH)) {
+        } else if (path.equalsIgnoreCase(Constants.ADD_FAVORITE_PATH)) {
 
             // Add the favorite's status to a talk
             addFavorite(messageEvent.getData());
-        } else if (path.equalsIgnoreCase(Constants.CHANNEL_ID + Constants.REMOVE_FAVORITE_PATH)) {
+        } else if (path.equalsIgnoreCase(Constants.REMOVE_FAVORITE_PATH)) {
 
             // Remove the favorite's status of a talk
             removeFavorite(messageEvent.getData());
@@ -248,7 +248,7 @@ public class WearService extends WearableListenerService {
     private void sendFavorite(String talkId, Long eventId) {
 
         // send the event
-        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CHANNEL_ID + Constants.FAVORITE_PATH + "/" + talkId);
+        PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.FAVORITE_PATH + "/" + talkId);
 
         // store the data
         DataMap dataMap = new DataMap();
@@ -315,7 +315,7 @@ public class WearService extends WearableListenerService {
 
     // send Conferences to the watch
     private void sendConferences(TreeMap<String, Conference> conferences) {
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CHANNEL_ID + Constants.CONFERENCES_PATH);
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CONFERENCES_PATH);
 
         // set the header (timestamp is used to force a onDataChanged event on the wearable)
         final DataMap headerMap = new DataMap();
@@ -384,7 +384,7 @@ public class WearService extends WearableListenerService {
 
     // send Schedules to the watch
     private void sendSchedules(String countryCode, List<Link> schedules) {
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CHANNEL_ID + Constants.SCHEDULES_PATH + "/" + countryCode);
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SCHEDULES_PATH + "/" + countryCode);
 
         ArrayList<DataMap> schedulesDataMap = new ArrayList<>();
 
@@ -462,7 +462,7 @@ public class WearService extends WearableListenerService {
             return;
         }
 
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CHANNEL_ID + Constants.SLOTS_PATH + "/" + countryCode + "/" + day);
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.SLOTS_PATH + "/" + countryCode + "/" + day);
 
         ArrayList<DataMap> slotsDataMap = new ArrayList<>();
 
@@ -563,7 +563,7 @@ public class WearService extends WearableListenerService {
      * Send the talk to the watch.
      */
     private void sendTalk(String countryCode, Talk talk) {
-        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.CHANNEL_ID + Constants.TALK_PATH + "/" + countryCode + "/" + talk.getId());
+        final PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(Constants.TALK_PATH + "/" + countryCode + "/" + talk.getId());
 
         final DataMap talkDataMap = new DataMap();
 
@@ -660,7 +660,7 @@ public class WearService extends WearableListenerService {
     // Send the speaker's detail to the watch.
     private void sendSpeaker(String countryCode, final Speaker speaker) {
 
-        final String dataPath = Constants.CHANNEL_ID + Constants.SPEAKER_PATH + "/" + countryCode + "/" + speaker.getUuid();
+        final String dataPath = Constants.SPEAKER_PATH + "/" + countryCode + "/" + speaker.getUuid();
 
         PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(dataPath);
 

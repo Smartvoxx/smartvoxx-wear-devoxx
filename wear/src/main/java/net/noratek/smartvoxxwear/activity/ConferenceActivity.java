@@ -92,7 +92,7 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
         mClicked = false;
 
         // Retrieve and display the list of schedules
-        getConferencesFromCache(Constants.CHANNEL_ID + Constants.CONFERENCES_PATH);
+        getConferencesFromCache(Constants.CONFERENCES_PATH);
     }
 
     @Override
@@ -148,7 +148,7 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
         for (DataEvent event : dataEventBuffer) {
 
             // Check if we have received our schedules
-            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CHANNEL_ID + Constants.CONFERENCES_PATH)) {
+            if (event.getType() == DataEvent.TYPE_CHANGED && event.getDataItem().getUri().getPath().startsWith(Constants.CONFERENCES_PATH)) {
 
                 ConferencesListWrapper conferencesListWrapper = new ConferencesListWrapper();
 

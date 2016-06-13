@@ -7,24 +7,24 @@ public class Constants {
 
 
     // Data path
-    public static final String CHANNEL_ID = "/000001";
+    private static final String CHANNEL_ID = "/000001";
 
     public static final String HEADER_PATH = "/header";
 
-    public static final String CONFERENCES_PATH = "/conferences";
+    public static final String CONFERENCES_PATH = CHANNEL_ID + "/conferences";
 
-    public static final String SCHEDULES_PATH = "/schedules";
+    public static final String SCHEDULES_PATH = CHANNEL_ID + "/schedules";
 
-    public static final String SLOTS_PATH = "/slots";
+    public static final String SLOTS_PATH = CHANNEL_ID + "/slots";
 
-    public static final String TALK_PATH = "/talk";
+    public static final String TALK_PATH = CHANNEL_ID + "/talk";
 
-    public static final String SPEAKERS_PATH = "/speakers";
-    public static final String SPEAKER_PATH = "/speaker";
+    public static final String SPEAKERS_PATH = CHANNEL_ID + "/speakers";
+    public static final String SPEAKER_PATH = CHANNEL_ID + "/speaker";
 
-    public static final String FAVORITE_PATH = "/favorite";
-    public static final String ADD_FAVORITE_PATH = "/add-favorite";
-    public static final String REMOVE_FAVORITE_PATH = "/remove-favorite";
+    public static final String FAVORITE_PATH = CHANNEL_ID + "/favorite";
+    public static final String ADD_FAVORITE_PATH = CHANNEL_ID + "/add-favorite";
+    public static final String REMOVE_FAVORITE_PATH = CHANNEL_ID + "/remove-favorite";
 
 
     public static final String LIST_PATH = "/list";
