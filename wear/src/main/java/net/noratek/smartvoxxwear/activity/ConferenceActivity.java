@@ -244,7 +244,7 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
         mClicked = true;
 
         // display schedules for this conference
-        Intent scheduleIntent = new Intent(ConferenceActivity.this, ScheduleActivity.class);
+        Intent scheduleIntent = new Intent(ConferenceActivity.this, Schedule2Activity.class);
 
         Bundle b = new Bundle();
         b.putString(Constants.DATAMAP_COUNTRY, conference.getCountryCode());
@@ -342,7 +342,7 @@ public class ConferenceActivity extends Activity implements WearableListView.Cli
 
             public SettingsItemView(Context context) {
                 super(context);
-                View.inflate(context, R.layout.schedule_row_activity, this);
+                View.inflate(context, R.layout.schedule_row_fragment, this);
 
                 description = (TextView) findViewById(R.id.description);
             }

@@ -1,16 +1,13 @@
 package net.noratek.smartvoxxwear.activity;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.wearable.view.WatchViewStub;
+import android.support.wearable.view.DotsPageIndicator;
+import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WearableListView;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.TextView;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
@@ -27,21 +24,26 @@ import com.google.android.gms.wearable.Wearable;
 import net.noratek.smartvoxx.common.model.Schedule;
 import net.noratek.smartvoxx.common.utils.Constants;
 import net.noratek.smartvoxxwear.R;
+import net.noratek.smartvoxxwear.adapter.ScheduleGridPageAdapter;
+import net.noratek.smartvoxxwear.event.SchedulesEvent;
 import net.noratek.smartvoxxwear.wrapper.SchedulesListWrapper;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ScheduleActivity extends Activity implements WearableListView.ClickListener, GoogleApiClient.ConnectionCallbacks, DataApi.DataListener {
+import pl.tajchert.buswear.EventBus;
 
-    private final static String TAG = ScheduleActivity.class.getCanonicalName();
+/**
+ * Created by eloudsa on 14/06/16.
+ */
+public class Schedule2Activity extends Activity implements GoogleApiClient.ConnectionCallbacks, DataApi.DataListener {
+
+    private final static String TAG = Schedule2Activity.class.getCanonicalName();
 
     // Google Play Services
     private GoogleApiClient mApiClient;
 
     // Layout widgets and adapters
     private WearableListView mListView;
-    private ListViewAdapter mListViewAdapter;
 
     // Avoid double tap
     private Boolean mClicked = false;
@@ -50,10 +52,17 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
     private String mCountryCode;
     private String mServerUrl;
 
+    // Layout widgets and adapters
+    private ScheduleGridPageAdapter mScheduleGridPageAdapter;
+    private GridViewPager mPager;
+    private DotsPageIndicator mDotsPageIndicator;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
         // selected conference
         mCountryCode = "BE";
@@ -63,26 +72,15 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
             mServerUrl = bundle.getString(Constants.DATAMAP_SERVER_URL);
         }
 
-        setContentView(R.layout.schedule_fragment);
-        final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
-        stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
-            @Override
-            public void onLayoutInflated(WatchViewStub stub) {
+        setContentView(R.layout.schedule_activity);
+        mPager = (GridViewPager) findViewById(R.id.pager);
 
-                // change the title
-                ((TextView) findViewById(R.id.title)).setText(getString(R.string.welcome_devoxx) + " " + mCountryCode);
+        // we prepare the view with initial values gathered from the Slot
+        mScheduleGridPageAdapter = new ScheduleGridPageAdapter(this, getFragmentManager(), mCountryCode);
+        mPager.setAdapter(mScheduleGridPageAdapter);
 
-                // Listview component
-                mListView = (WearableListView) findViewById(R.id.wearable_list);
-
-                // Assign the adapter
-                mListViewAdapter = new ListViewAdapter(ScheduleActivity.this, new ArrayList<Schedule>());
-                mListView.setAdapter(mListViewAdapter);
-
-                // Set the click listener
-                mListView.setClickListener(ScheduleActivity.this);
-            }
-        });
+        mDotsPageIndicator = (DotsPageIndicator) findViewById(R.id.page_indicator);
+        mDotsPageIndicator.setPager(mPager);
     }
 
 
@@ -147,7 +145,9 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
                 final List<Schedule> schedulesList = schedulesListWrapper.getSchedulesList(event);
 
-                updateUI(schedulesList);
+                EventBus.getDefault().postLocal(new SchedulesEvent(schedulesList));
+
+                updateUI();
 
                 return;
             }
@@ -194,23 +194,46 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
 
                                 dataItems.release();
 
-                                updateUI(schedulesList);
+                                EventBus.getDefault().postLocal(new SchedulesEvent(schedulesList));
+
+                                updateUI();
                             }
                         }
                 );
     }
 
 
-    private void updateUI(final List<Schedule> schedulesList) {
+    private void updateUI() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 findViewById(R.id.progressBar).setVisibility(View.GONE);
-                mListViewAdapter.refresh(schedulesList);
+                //mScheduleGridPageAdapter.notifyDataSetChanged();
             }
         });
     }
 
+
+    public void displaySlot(String dayName) {
+
+        // display slots for this schedule
+        Intent scheduleIntent = new Intent(Schedule2Activity.this, SlotActivity.class);
+
+        Bundle b = new Bundle();
+        b.putString(Constants.DATAMAP_SERVER_URL, mServerUrl);
+        b.putString(Constants.DATAMAP_COUNTRY, mCountryCode);
+        b.putString(Constants.DATAMAP_DAY_NAME, dayName);
+        scheduleIntent.putExtras(b);
+
+        Schedule2Activity.this.startActivity(scheduleIntent);
+
+    }
+
+
+    public void getSchedules() {
+        // Retrieve and display the list of schedules
+        getSchedulesFromCache(Constants.SCHEDULES_PATH + "/" + mCountryCode);
+    }
 
 
     @Override
@@ -222,133 +245,5 @@ public class ScheduleActivity extends Activity implements WearableListView.Click
     public void onConnectionSuspended(int i) {
 
     }
-
-    @Override
-    public void onClick(WearableListView.ViewHolder viewHolder) {
-
-        // Avoid double tap
-        if (mClicked) {
-            return;
-        }
-
-        Schedule schedule = (Schedule) viewHolder.itemView.getTag();
-        if (schedule == null) {
-            return;
-        }
-
-        mClicked = true;
-
-        // display slots for this schedule
-        Intent scheduleIntent = new Intent(ScheduleActivity.this, SlotActivity.class);
-
-        Bundle b = new Bundle();
-        b.putString(Constants.DATAMAP_SERVER_URL, mServerUrl);
-        b.putString(Constants.DATAMAP_COUNTRY, mCountryCode);
-        b.putString(Constants.DATAMAP_DAY_NAME, schedule.getDay());
-        scheduleIntent.putExtras(b);
-
-        ScheduleActivity.this.startActivity(scheduleIntent);
-    }
-
-    @Override
-    public void onTopEmptyRegionClick() {
-
-    }
-
-
-    // Inner class providing the WearableListview's adapter
-    public class ListViewAdapter extends WearableListView.Adapter {
-        private List<Schedule> mDataset;
-        private final Context mContext;
-
-        // Provide a suitable constructor (depends on the kind of dataset)
-        public ListViewAdapter(Context context, List<Schedule> schedulesList) {
-            mContext = context;
-            this.mDataset = schedulesList;
-        }
-
-        // Provide a reference to the type of views we're using
-        public class ItemViewHolder extends WearableListView.ViewHolder {
-            private TextView textView;
-
-            public ItemViewHolder(View itemView) {
-                super(itemView);
-                // find the text view within the custom item's layout
-                textView = (TextView) itemView.findViewById(R.id.description);
-            }
-        }
-
-        // Create new views for list items
-        // (invoked by the WearableListView's layout manager)
-        @Override
-        public WearableListView.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                              int viewType) {
-            // Inflate our custom layout for list items
-            return new ItemViewHolder(new SettingsItemView(mContext));
-        }
-
-        // Replace the contents of a list item
-        // Instead of creating new views, the list tries to recycle existing ones
-        // (invoked by the WearableListView's layout manager)
-        @Override
-        public void onBindViewHolder(WearableListView.ViewHolder holder,
-                                     int position) {
-
-            // retrieve the text view
-            ItemViewHolder itemHolder = (ItemViewHolder) holder;
-            TextView view = itemHolder.textView;
-
-            // retrieve, transform and display the schedule's day
-            Schedule schedule = mDataset.get(position);
-            String scheduleDay = schedule.getTitle().replace(",", "\n");
-            view.setText(scheduleDay);
-
-            // replace list item's metadata
-            holder.itemView.setTag(schedule);
-        }
-
-        // Return the size of your dataset
-        // (invoked by the WearableListView's layout manager)
-        @Override
-        public int getItemCount() {
-            if (mDataset == null) {
-                return 0;
-            }
-            return mDataset.size();
-        }
-
-        public void refresh(List<Schedule> schedulesList) {
-            mDataset = schedulesList;
-
-            // reload the listview
-            notifyDataSetChanged();
-        }
-
-
-        // Static nested class used to animate the listview's item
-        public final class SettingsItemView extends FrameLayout implements WearableListView.OnCenterProximityListener {
-
-            private TextView description;
-
-            public SettingsItemView(Context context) {
-                super(context);
-                View.inflate(context, R.layout.schedule_row_fragment, this);
-
-                description = (TextView) findViewById(R.id.description);
-            }
-
-            @Override
-            public void onCenterPosition(boolean b) {
-                description.animate().scaleX(1f).scaleY(1f).alpha(1);
-            }
-
-            @Override
-            public void onNonCenterPosition(boolean b) {
-                description.animate().scaleX(0.8f).scaleY(0.8f).alpha(0.6f);
-            }
-        }
-
-    }
-
 
 }

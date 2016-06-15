@@ -102,6 +102,9 @@ public class Constants {
     public final static String PAGER_TALK_SPEAKER = "talk-speaker";
     public final static String PAGER_SPEAKER = "Speaker";
 
+    public final static String PAGER_SCHEDULES_LIST = "schedules-list";
+
+
 
     // location of CFP.JSON
     public static final String CFP_API_URL = "https://s3-eu-west-1.amazonaws.com";
