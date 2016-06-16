@@ -7,7 +7,7 @@ public class Constants {
 
 
     // Data path
-    private static final String CHANNEL_ID = "/000001";
+    private static final String CHANNEL_ID = "/000002";
 
     public static final String HEADER_PATH = "/header";
 
