@@ -53,6 +53,7 @@ public class WearService extends WearableListenerService {
     private GoogleApiConnector mGoogleApiConnector;
 
 
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -172,6 +173,7 @@ public class WearService extends WearableListenerService {
         if (inputMap == null) {
             return;
         }
+
 
         // Retrieve the Talk
         Talk talk = new Talk();

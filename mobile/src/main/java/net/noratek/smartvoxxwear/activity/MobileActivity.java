@@ -1,10 +1,14 @@
 package net.noratek.smartvoxxwear.activity;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -21,6 +25,12 @@ public class MobileActivity extends AppCompatActivity {
     private String mVersionName;
 
     private GoogleApiConnector mGoogleApiConnector;
+
+    public static final int CHECK_PERMISSION_REQ_CODE = 99;
+    public static final String[] MAP_PERMISSIONS = new String[]{
+            Manifest.permission.READ_CALENDAR,
+            Manifest.permission.WRITE_CALENDAR};
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +51,13 @@ public class MobileActivity extends AppCompatActivity {
             Log.d(TAG, e.getMessage());
         }
 
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!checkGivenPermissions(this, MAP_PERMISSIONS)) {
+                    requestPermissions(MAP_PERMISSIONS, CHECK_PERMISSION_REQ_CODE);
+                }
+            }
+
     }
 
     @Override
@@ -48,6 +65,8 @@ public class MobileActivity extends AppCompatActivity {
         mGoogleApiConnector.disconnect();
         super.onStop();
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -116,5 +135,18 @@ public class MobileActivity extends AppCompatActivity {
 
         builder.show();
     }
+
+
+
+
+    public static boolean checkGivenPermissions(Activity activity, String... permissions) {
+        boolean result = true;
+        for (String permission : permissions) {
+            result &= ActivityCompat.checkSelfPermission(activity, permission)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
+        return result;
+    }
+
 
 }

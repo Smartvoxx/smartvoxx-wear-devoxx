@@ -28,6 +28,7 @@ public class CalendarHelper {
     private String mCalendarURI;
 
 
+
     public CalendarHelper(Context mContext) {
         this.mContext = mContext;
 
@@ -70,7 +71,6 @@ public class CalendarHelper {
 
         event.put("allDay", 0); // 0 for false, 1 for true
         event.put("eventStatus", 1);
-        event.put("hasAlarm", 1); // 0 for false, 1 for true
 
         String eventUriString = mCalendarURI + "events";
         Uri eventUri = mContext.getContentResolver()
@@ -212,6 +212,8 @@ public class CalendarHelper {
     }
 
     private String getCalendarUriBase() {
+
+
         String calendarUriBase = null;
         Uri calendars = Uri.parse("content://com.android.calendar/calendars");
 
@@ -237,10 +239,14 @@ public class CalendarHelper {
             }
         }
 
-        managedCursor.close();
+        if (managedCursor != null) {
+            managedCursor.close();
+        }
 
         return calendarUriBase;
     }
+
+
 
 
 

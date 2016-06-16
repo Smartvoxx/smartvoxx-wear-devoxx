@@ -92,6 +92,8 @@ public class Schedule2Activity extends Activity implements GoogleApiClient.Conne
 
         // Retrieve and display the list of schedules
         getSchedulesFromCache(Constants.SCHEDULES_PATH + "/" + mCountryCode);
+
+        getFavoriteFromCache();
     }
 
     @Override
@@ -197,6 +199,62 @@ public class Schedule2Activity extends Activity implements GoogleApiClient.Conne
                                 EventBus.getDefault().postLocal(new SchedulesEvent(schedulesList));
 
                                 updateUI();
+                            }
+                        }
+                );
+    }
+
+
+    // Get favorite status of the talk from the data item repository (cache).
+    // If not available, we refresh the data from the Mobile device.
+    //
+    private void getFavoriteFromCache() {
+
+        final String dataPath = Constants.FAVORITE_PATH;
+
+        Uri uri = new Uri.Builder()
+                .scheme(PutDataRequest.WEAR_URI_SCHEME)
+                .path(dataPath)
+                .build();
+
+        Wearable.DataApi.getDataItems(mApiClient, uri)
+                .setResultCallback(
+                        new ResultCallback<DataItemBuffer>() {
+                            @Override
+                            public void onResult(DataItemBuffer dataItems) {
+
+                                DataMap dataMap = null;
+                                if (dataItems.getCount() > 0) {
+                                    // retrieve the favorite from the cache
+                                    dataMap = DataMap.fromByteArray(dataItems.get(0).getData());
+                                }
+/*
+                                // retrieve the favorite from the cache
+                                if (dataMap == null) {
+                                    // Prepare the data map
+                                    DataMap favoriteDataMap = new DataMap();
+                                    favoriteDataMap.putString(Constants.DATAMAP_TALK_ID, talk.getId());
+                                    favoriteDataMap.putString(Constants.DATAMAP_TITLE, talk.getTitle());
+                                    favoriteDataMap.putLong(Constants.DATAMAP_FROM_TIME_MILLIS, talk.getFromTimeMillis());
+                                    favoriteDataMap.putLong(Constants.DATAMAP_TO_TIME_MILLIS, talk.getToTimeMillis());
+
+                                    // unable to fetch data -> retrieve the favorite status from the Mobile
+                                    sendMessage(Constants.FAVORITE_PATH, favoriteDataMap.toByteArray());
+                                    dataItems.release();
+                                    return;
+                                }
+
+                                DataMap favoriteMap = dataMap.getDataMap(Constants.DETAIL_PATH);
+                                if (favoriteMap == null) {
+                                    dataItems.release();
+                                    return;
+                                }
+
+                                mTalk.setEventId(favoriteMap.getLong(Constants.DATAMAP_EVENT_ID));
+                                EventBus.getDefault().postLocal(new FavoriteEvent(mTalk.getEventId()));
+*/
+
+                                dataItems.release();
                             }
                         }
                 );
